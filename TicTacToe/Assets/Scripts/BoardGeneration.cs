@@ -91,8 +91,8 @@ public class BoardGeneration : MonoBehaviour
         tileBounds = emptyTile.GetComponent<SpriteRenderer>().bounds.size;
     }
 
-    //clears all of the empty tiles
-    private void ClearBoard()
+    //clears all of the empty tiles. Accessed from here or from Game Manager
+    public void ClearBoard()
     {
         foreach (Transform child in transform)
         {

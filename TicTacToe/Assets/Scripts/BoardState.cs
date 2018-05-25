@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 //Handles everything related to the state of the board: stores the location of pieces, adds new positions, and checks if the game is won
+//Consists of a 2D array. Each emptytile, when created during board generations, gets assigned a value which corresponds to an index in a 2D array.
+//When adding player pieces to the board, it'll add a 1 or 2 depending on p1 or p2. THIS IS NOT ZERO INDEXED
 public static class BoardState
 {
     private static int boardDimension;                            //The dimensions of the board grid
@@ -21,7 +23,7 @@ public static class BoardState
         boardPositions = new int[boardDimension, boardDimension];
         //set a list of possible diagonals
         diagonals = GetDiagonals();
-        Debug.Log(boardPositions.Length);
+        boardCount = 0;
     }
 
     //Adds a new position into the board array and checks if the game is over
@@ -57,8 +59,8 @@ public static class BoardState
         }
     }
 
-    //to be called after every move to check if the game is won. 
-    private static bool CheckIfGameOver(Vector2Int position, int player)
+    //to be called after every move to check if the game is won. Returns true if someone has won
+    public static bool CheckIfGameOver(Vector2Int position, int player)
     {
         if (CheckColumn(position.y, player))
         {
@@ -72,22 +74,20 @@ public static class BoardState
             return true;
         }
 
-
         //check diagonally
         if (diagonals.Contains(position))
         {
-            if (CheckFrontDiagonal(player) || CheckBackDiagonal(player))
+            if (CheckDiagonal(player))
             {
                 Debug.Log("Player " + player + " has won!");
                 return true;
             }
         }
-        Debug.Log("No Victory Yet");
         return false;
     }
 
     //Checks if we have a draw by matching the count of selected grid cells to the number of total positions
-    private static bool CheckIfDraw()
+    public static bool CheckIfDraw()
     {
         if (boardCount >= boardPositions.Length)
         {
@@ -128,10 +128,10 @@ public static class BoardState
         return true;
     }
 
-    //check the diagonal from top left to bottom right such as \
-    private static bool CheckFrontDiagonal(int player)
+    //check the diagonals, first checking like this: \ and then this /
+    private static bool CheckDiagonal(int player)
     {
-        //on this diagonal, each one increments by 1,1
+        //top-left to bottom right, each one increments by 1,1
         for (int i = 0; i < boardDimension; i++)
         {
             if (boardPositions[i, i] != player)
@@ -139,13 +139,8 @@ public static class BoardState
                 return false;
             }
         }
-        return true;
-    }
 
-    //check the diagonal from bottom left to top right such as /
-    private static bool CheckBackDiagonal(int player)
-    {
-        //on this diagonal, each one increments by i, d - 1 -i
+        //from bottom left to top-right, each tile increments by i, d - 1 -i
         for (int i = 0; i < boardDimension; i++)
         {
             if (boardPositions[i, boardDimension - 1 - i] != player)
@@ -167,10 +162,6 @@ public static class BoardState
         for (int i = 0; i < boardDimension; i++)
         {
             result.Add(new Vector2Int(i, boardDimension - 1 - i));
-        }
-        foreach (Vector2Int vec in result)
-        {
-            Debug.Log(vec);
         }
         return result;
     }
