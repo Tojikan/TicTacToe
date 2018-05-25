@@ -11,26 +11,21 @@ public class BoardGeneration : MonoBehaviour
     const float tileSpacing = 0.02f;                //space in between rows and columns
     private Vector2 tileBounds;                     //x and y size for the bounds of empty tile used for positioning new tiles
     private GameObject emptyTile = null;            //the selected tile used for generating the game board. Is set in SetTileSize.
-    private BoardState boardState;                  //the component that stores the state of the board and checks victory. Set in Awake
 
-
-
-    private void Awake()
-    {
-        boardState = FindObjectOfType<BoardState>();
-    }
 
 
     #region public function to be called
     //main public method called by game to generate the board. pass parameter of the board size
-    public void GenerateBoard(int dimension)
+    public void GenerateBoard()
     {
-        ClearBoard();                           //destroy any existing children of this object
-        SetTileSize(dimension);                 //select large or small tile 
-        GetTileBounds();                        //get tile size
-        GenerateTiles(dimension);               //instantiates new tiles as child of this game object
-        boardState.SetBoardArray(dimension);    //sets the board array
+
+        int dimension = BoardState.BoardDimension;  //get the current dimensions of the board
+        ClearBoard();                               //destroy any existing children of this object
+        SetTileSize(dimension);                     //select large or small tile 
+        GetTileBounds();                            //get tile size
+        GenerateTiles(dimension);                   //instantiates new tiles as child of this game object
     }
+
     #endregion 
 
     #region private functions that do all the work
@@ -58,7 +53,7 @@ public class BoardGeneration : MonoBehaviour
         }
     }
 
-    //Generates 
+    //Generates the tiles 
     private void GenerateTiles(int dimension)
     {
         Debug.Log("Generating Tiles of Dimension: " + dimension);

@@ -4,23 +4,26 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public BoardState boardState;                    //drag a reference to the board state here, which tracks tiles
+    public static bool inputEnabled = false;                    //static bool to set if the player input is enabled
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (inputEnabled)
         {
-            //Vector3 worldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-
-            RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction, 100f);
-            if (hit)
+            if (Input.GetMouseButtonDown(0))
             {
-                if (hit.transform.tag == "EmptyTile")
+                //Vector3 worldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+                RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction, 100f);
+                if (hit)
                 {
-                    Vector2Int value = hit.transform.GetComponent<EmptyTile>().TileValue;
-                    hit.transform.gameObject.SetActive(false); 
-                    boardState.AddPosition(value, 1);
+                    if (hit.transform.tag == "EmptyTile")
+                    {
+                        Vector2Int value = hit.transform.GetComponent<EmptyTile>().TileValue;
+                        hit.transform.gameObject.SetActive(false);
+                        BoardState.AddPosition(value, 1);
+                    }
                 }
             }
         }
