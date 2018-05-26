@@ -8,15 +8,20 @@ using UnityEngine;
 public static class BoardState
 {
     private static int boardDimension;                            //The dimensions of the board grid
-    public static int BoardDimension                              //Property accessor
+    public static int BoardDimension                              //Property accessor. Also clamps the grid dimensions
     {
         get { return boardDimension; }
-        set { boardDimension = value; }
+        set {
+            boardDimension = value;
+            Mathf.Clamp(boardDimension, 3, 9);
+        }
     }                          
     private static List<Vector2Int> diagonals;                    //List that contains the positions of grid squares that are on a diagonal - used for checking if we should check diagonally
     private static int[,] boardPositions;                         //2D array that represents the grid positions of the gameboard when it comes to checking victory
     private static int boardCount = 0;                            //Count of all the already selected board positions - used to check for draws. Incremented when new position added
 
+
+    #region setup and manipulate the board array
     //set up a new board 2D array
     public static void SetBoardArray()
     {
@@ -58,7 +63,9 @@ public static class BoardState
             return true;
         }
     }
+    #endregion
 
+    #region Check functions
     //to be called after every move to check if the game is won. Returns true if someone has won
     public static bool CheckIfGameOver(Vector2Int position, int player)
     {
@@ -77,7 +84,7 @@ public static class BoardState
         //check diagonally
         if (diagonals.Contains(position))
         {
-            if (CheckDiagonal(player))
+            if (CheckRightDiagonal(player) || CheckLeftDiagonal(player))
             {
                 Debug.Log("Player " + player + " has won!");
                 return true;
@@ -97,6 +104,8 @@ public static class BoardState
         else
             return false;
     }
+
+    #endregion
 
     #region Functions for Checking rows, columns and diagonals
     //check along an entire column given parameters of a player to check for and a column position (second indice of the 2D matrix)
@@ -129,7 +138,7 @@ public static class BoardState
     }
 
     //check the diagonals, first checking like this: \ and then this /
-    private static bool CheckDiagonal(int player)
+    private static bool CheckLeftDiagonal(int player)
     {
         //top-left to bottom right, each one increments by 1,1
         for (int i = 0; i < boardDimension; i++)
@@ -139,7 +148,12 @@ public static class BoardState
                 return false;
             }
         }
+        return true;
+    }
 
+    //check on a diagonal line like this /
+    private static bool CheckRightDiagonal(int player)
+    {
         //from bottom left to top-right, each tile increments by i, d - 1 -i
         for (int i = 0; i < boardDimension; i++)
         {

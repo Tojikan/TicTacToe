@@ -9,10 +9,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 286ac329b2d7bab41bf24aba79570e6a, type: 3}
-  m_Name: PlayerTiles
+  m_Name: PlayerIcons
   m_EditorClassIdentifier: 
-  tiles:
+  largeIcons:
   - {fileID: 1607052653105936, guid: 30fa0a1776ab4a04da3c45fe9df2ccc9, type: 2}
   - {fileID: 1618188150779722, guid: 6de8ce1f73eed5f468bbc419d55b5089, type: 2}
   - {fileID: 1698494227940120, guid: f06d65381ba6bc74e8b8924c4b47da38, type: 2}
   - {fileID: 1646572849060630, guid: 37a1b40910d1918489bb49d73b25b96d, type: 2}
+  smallIcons:
+  - {fileID: 1442256524428344, guid: 1571bf8e374c9984fa4873b06f046d72, type: 2}
+  - {fileID: 1347839984044996, guid: 0586a50c3e6f71245b71cdcbd5475719, type: 2}
+  - {fileID: 1013985824415578, guid: 9d8c8de9627d1c047aa3759e00b601dd, type: 2}
+  - {fileID: 1107395806420416, guid: a48f494ff716f9143a953dac94a43710, type: 2}
