@@ -18,11 +18,20 @@ public class EmptyTile : MonoBehaviour
         spriteRender = GetComponent<SpriteRenderer>();
     }
 
-    private void OnMouseOver()
+    //spawns a tile prefab at the this location when clicked depending on player turn. Note that this is separate from what the game uses to track piece positions
+    public void SpawnTile()
     {
-        if (GameManager.InputEnabled)
-        {
+        //the selected tile, matched to the index of the playerIcons array object.
+        int playerTile = (GameManager.CurrentPlayer == GameManager.Player.P1) ? GameManager.instance.PlayerOneIcon : GameManager.instance.PlayerTwoIcon;
+        playerTile = Mathf.Clamp(playerTile, 0, 3);
+        GameObject tilePrefab;
+        //decide which size icon to use for instantiating
+        if (BoardState.BoardDimension < 5)
+            tilePrefab = GameManager.instance.iconSet.largeIcons[playerTile];
+        else
+            tilePrefab = GameManager.instance.iconSet.smallIcons[playerTile];
 
-        }
+        //instantiate at this location with same rotation and set under the Board Generation Game Object
+        GameObject newPlayerTile = Instantiate(tilePrefab, transform.position, Quaternion.identity, GameManager.instance.boardGeneration.gameObject.transform);
     }
 }

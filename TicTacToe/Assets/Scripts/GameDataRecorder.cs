@@ -67,7 +67,7 @@ public class GameDataRecorder : MonoBehaviour
     }
     #endregion
 
-
+    #region report data to console
     //used for testing purposes to see if recording game moves. Call this with the number of the match.
     public void ReportGame(int num)
     {
@@ -129,4 +129,5 @@ public class GameDataRecorder : MonoBehaviour
 
         Debug.Log(message);
     }
+    #endregion
 }

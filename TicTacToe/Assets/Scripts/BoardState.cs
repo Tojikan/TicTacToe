@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-//Handles everything related to the state of the board: stores the location of pieces, adds new positions, and checks if the game is won
-//Consists of a 2D array. Each emptytile, when created during board generations, gets assigned a value which corresponds to an index in a 2D array.
-//When adding player pieces to the board, it'll add a 1 or 2 depending on p1 or p2. THIS IS NOT ZERO INDEXED
+/**
+ * Handles everything related to the state of the board: stores the location of pieces, adds new positions, and checks if the game is won
+ * Consists of a 2D array. Each emptytile, when created during board generations, gets assigned a value which corresponds to an index in a 2D array.
+ * When adding player pieces to the board, it'll add a 1 or 2 depending on p1 or p2. THIS IS NOT ZERO INDEXED
+ * Also stores references to the empty tiles. This list is created during Board Generation and is used in the debugger
+**/
+
 public static class BoardState
 {
     private static int boardDimension;                            //The dimensions of the board grid
@@ -18,11 +22,15 @@ public static class BoardState
     }                          
     private static List<Vector2Int> diagonals;                    //List that contains the positions of grid squares that are on a diagonal - used for checking if we should check diagonally
     private static int[,] boardPositions;                         //2D array that represents the grid positions of the gameboard when it comes to checking victory
+#if UNITY_EDITOR
+    private static EmptyTile[,] emptyTileArray;                  //2D array that stores references to all empty tiles. Generated during board generation and only run in Unity Editor
+#endif
     private static int boardCount = 0;                            //Count of all the already selected board positions - used to check for draws. Incremented when new position added
+    
 
+    #region setup and manipulate the board array that the game actually tracks for checking wins and losses
 
-    #region setup and manipulate the board array
-    //set up a new board 2D array
+    //set up a new board 2D array which tracks the position of the player pieces in regards to checking for victory or draw. Called in GameManager
     public static void SetBoardArray()
     {
         boardPositions = new int[boardDimension, boardDimension];
@@ -41,6 +49,7 @@ public static class BoardState
             CheckIfDraw();
         }       
     }
+
 
     //adds a new position to the board given a Vector2(row, column) and an int to represent player - 1 for player 1 and 2 for player 2
     //if the move is valid, this will return true and false if not
@@ -64,6 +73,36 @@ public static class BoardState
         }
     }
     #endregion
+
+#if UNITY_EDITOR
+    #region setup and manipulate the list that tracks the empty tiles that are present on the screen. Used for the Debugger, only present in the unity editor
+    /**
+     * Because the board array is generated from a Vector 2D assigned separately to each empty tile upon instantiation, we can piggy back on those values to generate
+     * another 2D array of empty tiles using those same values as indices. As a result, they should match
+     * **/
+
+    //Generates a tile array of size
+    public static void GenerateTileArray()
+    {
+        emptyTileArray = new EmptyTile[boardDimension,boardDimension];
+    }
+    
+    //Adds a new tile to the array by getting indices from its tile value
+    public static void AddToTileArray(EmptyTile emptyTile)
+    {
+        emptyTileArray[emptyTile.TileValue.x, emptyTile.TileValue.y] = emptyTile;
+    }
+
+    //Trigger a tile drop
+    public static void TriggerTileDrop(int row, int column)
+    {
+        emptyTileArray[row, column].SpawnTile();
+    }
+
+
+
+    #endregion
+#endif
 
     #region Check functions
     //to be called after every move to check if the game is won. Returns true if someone has won

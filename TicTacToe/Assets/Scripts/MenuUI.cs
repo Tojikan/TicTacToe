@@ -8,7 +8,6 @@ using UnityEngine.UI;
 //Enables and disables different UI panel upon clicking - fixed state model for simplicity
 public class MenuUI : MonoBehaviour
 {
-    public GameManager gameManager;                     //drag game manager here to get reference to it
     public GameObject finishScreen;                     //panel that displays the game over message
     public GameObject sizeSelect;                       //panel for selecting grid sizes
     public GameObject iconSelect;                       //panel for selecting player icons
@@ -44,12 +43,6 @@ public class MenuUI : MonoBehaviour
         iconSelect.SetActive(true);
     }
 
-    #region Top buttons - the in-game buttons that go back to menu or surrenders the current players turn
-
-
-    #endregion
-
-
     #region Icon Select - anything related to icon select
     //Update check to see if player one or two HASN'T selected an icon. In that case, we disable the okay button
     private void Update()
@@ -75,38 +68,38 @@ public class MenuUI : MonoBehaviour
     public void IconSelect(int icon)
     {
         //if the icon clicked on is already player one, then we cancel it
-        if (icon == gameManager.PlayerOneIcon)
+        if (icon == GameManager.instance.PlayerOneIcon)
         {
             //Checks that it isn't already selected by player two and that we have a player one selected
-            if (icon != gameManager.PlayerTwoIcon && playerOneSelected)
+            if (icon != GameManager.instance.PlayerTwoIcon && playerOneSelected)
             {
                 //By setting to 4, the effect script will remove any effects or indicators. The value is clamped anyway when instantiating tiles later
-                gameManager.PlayerOneIcon = 4;
+                GameManager.instance.PlayerOneIcon = 4;
                 playerOneSelected = false;
                 return;
             }
         }
         //if the icon clicked on is NOT player one and we haven't selected, then set it to player one
-        else if (icon != gameManager.PlayerOneIcon && !playerOneSelected && icon != gameManager.PlayerTwoIcon)
+        else if (icon != GameManager.instance.PlayerOneIcon && !playerOneSelected && icon != GameManager.instance.PlayerTwoIcon)
         {
-            gameManager.PlayerOneIcon = icon;
+            GameManager.instance.PlayerOneIcon = icon;
             playerOneSelected = true;
             return;
         }
 
-        if (icon == gameManager.PlayerTwoIcon)
+        if (icon == GameManager.instance.PlayerTwoIcon)
         {
-            if (icon != gameManager.PlayerOneIcon && playerTwoSelected)
+            if (icon != GameManager.instance.PlayerOneIcon && playerTwoSelected)
             {
-                gameManager.PlayerTwoIcon = 4;
+                GameManager.instance.PlayerTwoIcon = 4;
                 playerTwoSelected = false;
                 return;
             }
         }
 
-        else if (icon != gameManager.PlayerTwoIcon && !playerTwoSelected && icon != gameManager.PlayerTwoIcon)
+        else if (icon != GameManager.instance.PlayerTwoIcon && !playerTwoSelected && icon != GameManager.instance.PlayerTwoIcon)
         {
-            gameManager.PlayerTwoIcon = icon;
+            GameManager.instance.PlayerTwoIcon = icon;
             playerTwoSelected = true;
             return;
         }
@@ -131,7 +124,7 @@ public class MenuUI : MonoBehaviour
     public void BackToSetup()
     {
         ClearPanel();
-        gameManager.ClearBoard();
+        GameManager.instance.ClearBoard();
         ShowPanel();
         iconSelect.SetActive(true); 
     }
@@ -141,7 +134,7 @@ public class MenuUI : MonoBehaviour
     {
         ClearPanel();
         HidePanel();
-        gameManager.StartNewGame();
+        GameManager.instance.StartNewGame();
     }
 
 
@@ -156,7 +149,7 @@ public class MenuUI : MonoBehaviour
         //hide the select size object so the panel is blank for the future
         ClearPanel();
         HidePanel();
-        gameManager.StartNewGame();
+        GameManager.instance.StartNewGame();
     }
     #endregion board size select
 

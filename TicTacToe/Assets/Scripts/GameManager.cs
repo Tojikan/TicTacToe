@@ -5,11 +5,14 @@ using UnityEngine;
 
 //Controller class that handles the flow of the game. Calls different functions in the other classes and manages the order of execution
 //Also tracks the current player at the time and handles all the transitions/animations between game parts
+//set to singleton for the purpose of making this more accessible and testable by the debugger
 public class GameManager : MonoBehaviour
 {
+    public static GameManager instance = null;                            //singleton instance of GameManager
     public GameObject selectSizeWindow;                                   //Drag UI Object that selects the size of the game grid
     public BoardGeneration boardGeneration;                               //Drag component that generates the board here
     public MenuUI UIManager;                                              //Drag the object that controls the UI pop up panel menu for setting game settings
+    public GameObject UIButtons;                                          //Drag the object that contains the top left buttons during games
     public PlayerIconSet iconSet;                                         //drag iconset scriptable object here
     public PlayerScoreKeeper p1Score;                                     //Drag p1 score UI element here
     public PlayerScoreKeeper p2Score;                                     //Drag p2 score UI element here
@@ -19,21 +22,7 @@ public class GameManager : MonoBehaviour
     public static Player CurrentPlayer
     {
         get { return currentPlayer; }
-        set
-        {
-            currentPlayer = value;
-            if (currentPlayer == Player.P1)
-            {
-                p1Score.FadeScore(true);
-                p2Score.FadeScore(false);
-            }
-            else
-            {
-                p2Score.FadeScore(true);
-                p1Score.FadeScore(false);
-            }
-        }
-    }                                 
+    }                                 //for reading outside the class
     private static bool inputEnabled = false;                             //static bool to set if the player input is enabled
     public static bool InputEnabled
     { get { return inputEnabled; } }                                    //for read only from outside of class
@@ -44,9 +33,7 @@ public class GameManager : MonoBehaviour
         get { return playerOneIcon; }
         set
         {
-            Mathf.Clamp(value, 0, iconSet.largeIcons.Length);
             playerOneIcon = value;
-            p1Score.SetImage(playerOneIcon);
         }
     }                                           //for setting the player icon image in the score keeper and clamping changes
     [SerializeField]
@@ -60,11 +47,19 @@ public class GameManager : MonoBehaviour
 
         set
         {
-            Mathf.Clamp(value, 0, iconSet.largeIcons.Length);
             playerTwoIcon = value;
-            p1Score.SetImage(playerTwoIcon);
         }
     }                                           //for setting the player icon image in the score keeper and clamping changes
+
+    private void Awake()
+    {
+        //set singleton instance
+        if (instance == null)
+            instance = this;
+        else if (instance != this)
+            Destroy(gameObject);
+    }
+
 
     private void Start()
     {
@@ -90,8 +85,10 @@ public class GameManager : MonoBehaviour
         BoardState.SetBoardArray();
         //Create a new match in the game data
         GameDataRecorder.instance.AddNewMatch(PlayerOneIcon, PlayerTwoIcon, BoardState.BoardDimension, (int)currentPlayer);
+        FadePlayerScores();
         EnableControls();
     }
+
     //checks if the game is over by calling the BoardState. This should be called after every player move.
     public void CheckBoardPositions(Vector2Int tileValue)
     {
@@ -117,8 +114,6 @@ public class GameManager : MonoBehaviour
     private void EndTurn()
     {
         SwitchCurrentPlayer();
-        //the turn animation also has an animation event that re-enables input as it was disabled in PlayerController
-        SwitchTurnAnimation();
         //re-enable input
         Invoke("EnableInput", playerInputInterval);
     }
@@ -130,12 +125,8 @@ public class GameManager : MonoBehaviour
             currentPlayer = Player.P2;
         else if (currentPlayer == Player.P2)
             currentPlayer = Player.P1;
-    }
 
-    //Start the turn switch animation
-    private void SwitchTurnAnimation()
-    {
-        return;
+        FadePlayerScores();
     }
 
     //Enable inputs again after player turns
@@ -147,9 +138,19 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void UISetPlayerAlpha(bool player)
+    //fade the player sides to show the current player
+    private void FadePlayerScores()
     {
-
+        if (currentPlayer == Player.P1)
+        {
+            p1Score.FadeScore(true);
+            p2Score.FadeScore(false);
+        }
+        else
+        {
+            p2Score.FadeScore(true);
+            p1Score.FadeScore(false);
+        }
     }
 
     #endregion
@@ -158,10 +159,16 @@ public class GameManager : MonoBehaviour
     //Called when a tie game is detected
     private void GameDraw()
     {
+        //stop inputs
         DisableControls();
+        //record game results
         GameDataRecorder.instance.RecordGameFinish(3);
+        //display message
         UIManager.FinishScreen("Not Everyone Can Be Winners", "Draw!");
+        //log the game to console
         GameDataRecorder.instance.ReportGame(GameDataRecorder.instance.MatchList.Count - 1);
+        //play draw music
+        AudioManager.instance.PlayDraw();
         return;
     }
 
@@ -172,11 +179,12 @@ public class GameManager : MonoBehaviour
         GameDataRecorder.instance.RecordGameFinish((int)currentPlayer);
         UIManager.FinishScreen("Winner Winner Chicken Dinner", "Player " + ((int)currentPlayer + 1));
         GameDataRecorder.instance.ReportGame(GameDataRecorder.instance.MatchList.Count - 1);
+        AudioManager.instance.PlayVictory();
         SwitchCurrentPlayer();
         return;
     }
 
-    //Ends the current game if we throw an error when trying to record moves into the board array
+    //Ends the current game if we throw an error when trying to record moves into the board array. Used during testing but keeping just in case.
     public void GameError()
     {
         DisableControls();
@@ -184,6 +192,7 @@ public class GameManager : MonoBehaviour
         Debug.LogError("ERROR: Unable to write move to board grid. Exiting...");
         GameDataRecorder.instance.ReportGame(GameDataRecorder.instance.MatchList.Count - 1);
         UIManager.BackToSetup();
+        AudioManager.instance.PlayDraw();
         return;
     }
 
@@ -194,8 +203,11 @@ public class GameManager : MonoBehaviour
         GameDataRecorder.instance.AddPlayerMove(new Vector2Int(-1, -1));
         SwitchCurrentPlayer();
         GameDataRecorder.instance.RecordGameFinish((int)currentPlayer);
-        UIManager.FinishScreen("Winner Winner Chicken Dinner", "Player " + ((int)currentPlayer + 1));
+        //get the surrendered player number
+        int surrendered = (CurrentPlayer == Player.P1) ? 2 : 1; 
+        UIManager.FinishScreen("Player " + surrendered + " Surrenders!", "Player " + ((int)currentPlayer + 1) + " Wins!");
         GameDataRecorder.instance.ReportGame(GameDataRecorder.instance.MatchList.Count - 1);
+        AudioManager.instance.PlayVictory();
     }
     
     //when click on a new game button - goes back to setup
@@ -204,6 +216,7 @@ public class GameManager : MonoBehaviour
         DisableControls();
         GameDataRecorder.instance.AddPlayerMove(new Vector2Int(-2, -2));
         GameDataRecorder.instance.RecordGameFinish(3);
+        GameDataRecorder.instance.ReportGame(GameDataRecorder.instance.MatchList.Count - 1);
         UIManager.BackToSetup();
     }
 
