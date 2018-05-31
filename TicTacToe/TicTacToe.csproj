@@ -296,6 +296,8 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\AudioManager.cs" />
     <Compile Include="Assets\Scripts\BoardGeneration.cs" />
+    <Compile Include="Assets\Scripts\BoardPosition.cs" />
+    <Compile Include="Assets\Scripts\BoardPositions.cs" />
     <Compile Include="Assets\Scripts\BoardState.cs" />
     <Compile Include="Assets\Scripts\Debugger.cs" />
     <Compile Include="Assets\Scripts\EmptyTile.cs" />
