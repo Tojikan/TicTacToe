@@ -19,11 +19,17 @@ public static class BoardState
             boardDimension = value;
             Mathf.Clamp(boardDimension, 3, 9);
         }
-    }                          
+    }
     private static List<Vector2Int> diagonals;                    //List that contains the positions of grid squares that are on a diagonal - used for checking if we should check diagonally
     private static int[,] boardPositions;                         //2D array that represents the grid positions of the gameboard when it comes to checking victory
+    public static int[,] BoardPositions                          //property accessor for reading the board array
+    {get { return boardPositions; }}
 #if UNITY_EDITOR
     private static EmptyTile[,] emptyTileArray;                  //2D array that stores references to all empty tiles. Generated during board generation and only run in Unity Editor
+    public static EmptyTile[,] EmptyTileArray
+    {
+        get { return emptyTileArray; }
+    }                //Property accessor for reading the tile array into the debugger
 #endif
     private static int boardCount = 0;                            //Count of all the already selected board positions - used to check for draws. Incremented when new position added
     
@@ -33,9 +39,11 @@ public static class BoardState
     //set up a new board 2D array which tracks the position of the player pieces in regards to checking for victory or draw. Called in GameManager
     public static void SetBoardArray()
     {
+        //new array
         boardPositions = new int[boardDimension, boardDimension];
         //set a list of possible diagonals
         diagonals = GetDiagonals();
+        //boardcount for counting for draw
         boardCount = 0;
     }
 
@@ -53,7 +61,7 @@ public static class BoardState
 
     //adds a new position to the board given a Vector2(row, column) and an int to represent player - 1 for player 1 and 2 for player 2
     //if the move is valid, this will return true and false if not
-    private static bool SetPositionInBoard(Vector2Int position, int player)
+    public static bool SetPositionInBoard(Vector2Int position, int player)
     {
         if (player != 1 && player != 2)
         {
@@ -148,7 +156,7 @@ public static class BoardState
 
     #region Functions for Checking rows, columns and diagonals
     //check along an entire column given parameters of a player to check for and a column position (second indice of the 2D matrix)
-    private static bool CheckColumn(int col, int player)
+    public static bool CheckColumn(int col, int player)
     {
         //iterate through each and match it with the player parameter (1 or 2)
         for (int i = 0; i < boardDimension; i++)
@@ -163,7 +171,7 @@ public static class BoardState
 
 
     //check along an entire row given parameters of a player to check for and a row position (first indice of the 2D matrix)
-    private static bool CheckRow(int row, int player)
+    public static bool CheckRow(int row, int player)
     {
         //iterate through each and match it with the player parameter (1 or 2)
         for (int i = 0; i < boardDimension; i++)
@@ -177,7 +185,7 @@ public static class BoardState
     }
 
     //check the diagonals, first checking like this: \ and then this /
-    private static bool CheckLeftDiagonal(int player)
+    public static bool CheckLeftDiagonal(int player)
     {
         //top-left to bottom right, each one increments by 1,1
         for (int i = 0; i < boardDimension; i++)
@@ -191,7 +199,7 @@ public static class BoardState
     }
 
     //check on a diagonal line like this /
-    private static bool CheckRightDiagonal(int player)
+    public static bool CheckRightDiagonal(int player)
     {
         //from bottom left to top-right, each tile increments by i, d - 1 -i
         for (int i = 0; i < boardDimension; i++)

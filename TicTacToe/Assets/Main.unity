@@ -214,8 +214,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd055d49472b5eb40a8f446c3522d5dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerIcons: {fileID: 11400000, guid: fbc5ce26581e31949886f1c1c840bb0d, type: 2}
-  board: {fileID: 1979988304}
 --- !u!4 &19148073
 Transform:
   m_ObjectHideFlags: 0
@@ -1962,19 +1960,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 964940878}
-        m_MethodName: 
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1305174411}
-        m_MethodName: BackToSetup
+      - m_Target: {fileID: 918335671}
+        m_MethodName: NewGame
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2055,7 +2042,7 @@ MonoBehaviour:
   selectSizeWindow: {fileID: 1542920312}
   boardGeneration: {fileID: 1979988305}
   UIManager: {fileID: 1305174411}
-  UIButtons: {fileID: 82593107}
+  UIButtons: {fileID: 1950844808}
   iconSet: {fileID: 11400000, guid: fbc5ce26581e31949886f1c1c840bb0d, type: 2}
   p1Score: {fileID: 119172831}
   p2Score: {fileID: 1337801515}
@@ -2777,6 +2764,46 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1146806292}
+--- !u!1 &1202345559
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 1202345561}
+  - component: {fileID: 1202345560}
+  m_Layer: 0
+  m_Name: BoardStateTester
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1202345560
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1202345559}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e7e981080c0df048b38243d94a92e88, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1202345561
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1202345559}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 780.4304, y: 136.11565, z: 5.2384825}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1207583870
 GameObject:
   m_ObjectHideFlags: 0
@@ -3171,6 +3198,7 @@ MonoBehaviour:
   iconSelect: {fileID: 1556699254}
   startScreen: {fileID: 637513462}
   gameUIPanel: {fileID: 1950844808}
+  gameButtonPanel: {fileID: 82593107}
   topMessage: {fileID: 670000176}
   bottomMessage: {fileID: 9302413}
   iconSelectConfirm: {fileID: 439538698}

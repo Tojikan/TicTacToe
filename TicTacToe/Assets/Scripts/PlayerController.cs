@@ -6,9 +6,6 @@ using UnityEngine;
 //Handles all of the player input and actions on click and such.  
 public class PlayerController : MonoBehaviour
 {
-    public PlayerIconSet playerIcons;                                   //Drag the scriptable object that references the player icon piece prefabs here
-    public GameObject board;                                            //Drag the board parent object here (wherever the BoardGeneration script is so we only need one clear board function)
-
     #region Mouse input for clicking tiles
     void Update()
     {
@@ -49,7 +46,7 @@ public class PlayerController : MonoBehaviour
         //try to add to board array - if error, then end the current match.
         try
         {
-            BoardState.AddPosition(tileValue, (int)GameManager.CurrentPlayer + 1);
+            BoardState.AddPosition(tileValue, (int)GameManager.CurrentPlayer);
         }
         catch (Exception e)
         {

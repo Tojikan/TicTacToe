@@ -12,7 +12,8 @@ public class MenuUI : MonoBehaviour
     public GameObject sizeSelect;                       //panel for selecting grid sizes
     public GameObject iconSelect;                       //panel for selecting player icons
     public GameObject startScreen;                      //StartScreen Panel. Should only show up at the beginning
-    public GameObject gameUIPanel;                      //In-game UI during matches. 
+    public GameObject gameUIPanel;                      //In-game UI during matches.
+    public GameObject gameButtonPanel;                  //Just the in-game UI buttons
     public Text topMessage;                             //drag the text that is the top line of the game over screen
     public Text bottomMessage;                          //bottom line of game over screen
     public Button iconSelectConfirm;                    //drag the icon done button here. Disable/enable if both players haven't or have been selected
@@ -137,7 +138,6 @@ public class MenuUI : MonoBehaviour
         GameManager.instance.StartNewGame();
     }
 
-
     #endregion
     
     #region Window for setting the grid dimension. Each onClick will set the board dimension
@@ -176,5 +176,27 @@ public class MenuUI : MonoBehaviour
             iconSelect.SetActive(false);
     }
 
-    #endregion
+#if UNITY_EDITOR
+    //Only for use with the debugger. Hides all screens and shows the game UI
+    public void SetUpDebugBoardUI()
+    {
+        finishScreen.SetActive(false);
+        sizeSelect.SetActive(false);
+        iconSelect.SetActive(false);
+        startScreen.SetActive(false);
+        image.enabled = false;
+        gameUIPanel.SetActive(true);
+        gameButtonPanel.SetActive(true);
+    }
+
+    //Only for use for the debugger during board state testing. Hides the top left buttons and all screens but keeps the player score text
+    public void DebugBoardStateTesting()
+    {
+        SetUpDebugBoardUI();
+        gameButtonPanel.SetActive(false);
+    }
+
+#endif
+
+#endregion
 }

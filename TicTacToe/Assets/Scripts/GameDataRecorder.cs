@@ -43,7 +43,7 @@ public class GameDataRecorder : MonoBehaviour
 
     //add a new move to the current match player array
     //positions are stored as a Vector2Int that refers to the RxC on the board array. 
-    //-1 indicates surrender. -2 indicates new game was setup
+    //-1: surrender           -2:  indicates new game was setup
     public void AddPlayerMove(Vector2Int position)
     {
         //get the current match
@@ -59,11 +59,14 @@ public class GameDataRecorder : MonoBehaviour
         }
     }
 
+    //records the finish state of the game
+    //0: Draw          1: P1          1: P2        3: New Game Started      4: Error
     public void RecordGameFinish (int game)
     {
         Debug.Log("Recorded a game finish of " + game);
-        MatchData match = matchList[matchList.Count - 1];
-        match.gameResult = game;
+        MatchData match = matchList[(matchList.Count - 1)];
+        match.GameResult = game;
+        matchList[(matchList.Count - 1)] = match;
     }
     #endregion
 
@@ -78,9 +81,8 @@ public class GameDataRecorder : MonoBehaviour
         message += "Board Dimension of " + match.boardDimension + "\n";
         message += ("Player 1 icon is " + match.pOneIcon) + "\n";
         message += ("Player 2 icon is " + match.pTwoIcon) + "\n";
-        message += ("Game Result was " + match.gameResult + ". 0 = no winner, 1 = p1, 2 = p2, 3 = draw, 4 = error") + "\n";
-        message += ("Starting player was " + match.startingPlayer + ". If this value is not 1 or 0, something wrong happened") + "\n";
-        message += ("Winner was " + match.gameResult) + "\n";
+        message += ("Game Result was " + match.GameResult + ". 0 = no winner, 1 = p1, 2 = p2, 3 = draw, 4 = error") + "\n";
+        message += ("Starting player was " + (match.startingPlayer) + ". ") + "\n";
 
         //figures out which is the highest count between both player arrays to determine who made the last move
         int c;
@@ -114,19 +116,23 @@ public class GameDataRecorder : MonoBehaviour
 
             if (i < firstPlayerMoves.Count)
             {
-                if (firstPlayerMoves[i].x == -2)
+                if (firstPlayerMoves[i].x == -1)
                     message += "Turn " + i + ": First Player Surrenders";
+                else if (firstPlayerMoves[i].x == -2)
+                    message += "Turn " + i + ": Game was ended on Player One's turn.";
                 else
                     message += ("Turn " + i + ": Player " + match.startingPlayer + " moves to " + firstPlayerMoves[i] + "\n"); 
             }
             if (i < secondPlayerMoves.Count)
             {
-                if (secondPlayerMoves[i].x == -2)
+                if (secondPlayerMoves[i].x == -1)
                     message += "Turn " + i + ": Second Player Surrenders";
-                message += ("Turn " + i + ": Second Player moves to " + secondPlayerMoves[i] + "\n");
+                else if (secondPlayerMoves[i].x == -2)
+                    message += "Turn " + i + ": Game was ended on Player Two's turn.";
+                else
+                    message += ("Turn " + i + ": Second Player moves to " + secondPlayerMoves[i] + "\n");
             }
         }
-
         Debug.Log(message);
     }
     #endregion

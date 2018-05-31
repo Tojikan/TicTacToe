@@ -11,7 +11,7 @@ public class EmptyTile : MonoBehaviour
     public Vector2Int TileValue                      //property accessor for tileValue
     { get { return tileValue; }
       set { tileValue = value; }}
-    public SpriteRenderer spriteRender;              //The sprite render component
+    private SpriteRenderer spriteRender;              //The sprite render component
 
     private void Awake()
     {
@@ -33,5 +33,7 @@ public class EmptyTile : MonoBehaviour
 
         //instantiate at this location with same rotation and set under the Board Generation Game Object
         GameObject newPlayerTile = Instantiate(tilePrefab, transform.position, Quaternion.identity, GameManager.instance.boardGeneration.gameObject.transform);
+
+        AudioManager.instance.PlayTileDrop();
     }
 }

@@ -299,6 +299,7 @@
     <Compile Include="Assets\Scripts\BoardPosition.cs" />
     <Compile Include="Assets\Scripts\BoardPositions.cs" />
     <Compile Include="Assets\Scripts\BoardState.cs" />
+    <Compile Include="Assets\Scripts\BoardStateTester.cs" />
     <Compile Include="Assets\Scripts\Debugger.cs" />
     <Compile Include="Assets\Scripts\EmptyTile.cs" />
     <Compile Include="Assets\Scripts\GameDataRecorder.cs" />

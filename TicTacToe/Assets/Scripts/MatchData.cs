@@ -10,10 +10,14 @@ public struct MatchData
     public List<Vector2Int> playerTwoMoves;         //array for all player two moves
     public int pOneIcon;                            //icon for player one
     public int pTwoIcon;                            //icon for player two
-    public int gameResult;                          //records who won this game: 0 for no winner; 1 for player 1; 2 for player 2; 3 is for draw; 4 is for match ended in error
     public int boardDimension;                      //records the dimension of the board for this particular match
     public int startingPlayer;                      // which player started the match. ZERO INDEXED: 0 for player 1, 1 for player 2
-
+    private int gameResult;                         //records who won this game: 0 for no winner; 1 for player 1; 2 for player 2; 3 is for draw; 4 is for match ended in error
+    public int GameResult
+    {
+        get { return gameResult; }
+        set { gameResult = value; }
+    }                        //property accessor
     //constructor. lists and the winner don't need to be set upon match finish
     public MatchData(int pOneIcon, int pTwoIcon, int boardDimension, int startingPlayer)
     {

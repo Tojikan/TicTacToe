@@ -17,7 +17,8 @@ public class GameManager : MonoBehaviour
     public PlayerScoreKeeper p1Score;                                     //Drag p1 score UI element here
     public PlayerScoreKeeper p2Score;                                     //Drag p2 score UI element here
     public float playerInputInterval = 0.2f;                              //Time in between re-enabling mouse input between player turns
-    public enum Player {P1, P2}                                           //This enum sets who the current player is
+    public enum Player                                                    //This enum sets who the current player is
+    { P1 = 1, P2 = 2}                                           
     private static Player currentPlayer;                                  //the current player variable
     public static Player CurrentPlayer
     {
@@ -92,7 +93,7 @@ public class GameManager : MonoBehaviour
     //checks if the game is over by calling the BoardState. This should be called after every player move.
     public void CheckBoardPositions(Vector2Int tileValue)
     {
-        if (BoardState.CheckIfGameOver(tileValue,(int)currentPlayer + 1))
+        if (BoardState.CheckIfGameOver(tileValue,(int)currentPlayer))
         {
             GameOver();
             return;
@@ -119,7 +120,7 @@ public class GameManager : MonoBehaviour
     }
 
     //switch to next player
-    private void SwitchCurrentPlayer()
+    public void SwitchCurrentPlayer()
     {
         if (currentPlayer == Player.P1)
             currentPlayer = Player.P2;
@@ -177,7 +178,7 @@ public class GameManager : MonoBehaviour
     {
         DisableControls();
         GameDataRecorder.instance.RecordGameFinish((int)currentPlayer);
-        UIManager.FinishScreen("Winner Winner Chicken Dinner", "Player " + ((int)currentPlayer + 1));
+        UIManager.FinishScreen("Winner Winner Chicken Dinner", "Player " + ((int)currentPlayer));
         GameDataRecorder.instance.ReportGame(GameDataRecorder.instance.MatchList.Count - 1);
         AudioManager.instance.PlayVictory();
         SwitchCurrentPlayer();
@@ -202,20 +203,20 @@ public class GameManager : MonoBehaviour
         DisableControls();
         GameDataRecorder.instance.AddPlayerMove(new Vector2Int(-1, -1));
         SwitchCurrentPlayer();
-        GameDataRecorder.instance.RecordGameFinish((int)currentPlayer);
+        GameDataRecorder.instance.RecordGameFinish((int)CurrentPlayer + 1);
         //get the surrendered player number
         int surrendered = (CurrentPlayer == Player.P1) ? 2 : 1; 
-        UIManager.FinishScreen("Player " + surrendered + " Surrenders!", "Player " + ((int)currentPlayer + 1) + " Wins!");
+        UIManager.FinishScreen("Player " + surrendered + " Surrenders!", "Player " + ((int)currentPlayer) + " Wins!");
         GameDataRecorder.instance.ReportGame(GameDataRecorder.instance.MatchList.Count - 1);
         AudioManager.instance.PlayVictory();
     }
     
-    //when click on a new game button - goes back to setup
+    //when click on a new game button. Declares a game end goes back to setup
     public void NewGame()
     {
         DisableControls();
         GameDataRecorder.instance.AddPlayerMove(new Vector2Int(-2, -2));
-        GameDataRecorder.instance.RecordGameFinish(3);
+        GameDataRecorder.instance.RecordGameFinish(0);
         GameDataRecorder.instance.ReportGame(GameDataRecorder.instance.MatchList.Count - 1);
         UIManager.BackToSetup();
     }
@@ -242,5 +243,18 @@ public class GameManager : MonoBehaviour
             Destroy(child.gameObject);
         }
     }
+
+#if UNITY_EDITOR
+    //This method is called in between cycles when testing board state in the debugger. 
+    public void BoardStateTestReset()
+    {
+        ClearBoard();
+        //special UI method to clear all screens regardless and set up the button UI
+        UIManager.DebugBoardStateTesting();
+        //Generate board and array
+        boardGeneration.GenerateBoard();
+        BoardState.SetBoardArray();
+    }
+#endif
     #endregion
 }
