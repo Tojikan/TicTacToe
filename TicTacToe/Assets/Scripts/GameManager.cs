@@ -205,12 +205,15 @@ public class GameManager : MonoBehaviour
         BoardStateTester.instance.StopAllCoroutines();
 #endif
         GameDataRecorder.instance.AddPlayerMove(new Vector2Int(-1, -1));
+        //switch to declare the other winner
         SwitchCurrentPlayer();
         GameDataRecorder.instance.RecordGameFinish((int)CurrentPlayer + 1);
         //get the surrendered player number
         int surrendered = (CurrentPlayer == Player.P1) ? 2 : 1; 
         UIManager.FinishScreen("Player " + surrendered + " Surrenders!", "Player " + ((int)currentPlayer) + " Wins!");
         GameDataRecorder.instance.ReportGame(GameDataRecorder.instance.MatchList.Count - 1);
+        //switch back to change game order for next game
+        SwitchCurrentPlayer();
         AudioManager.instance.PlayVictory();
     }
     

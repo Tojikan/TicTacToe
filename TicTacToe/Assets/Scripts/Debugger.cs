@@ -1,8 +1,11 @@
-﻿using System;
+﻿
+#if UNITY_EDITOR
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+
 
 //Debugger Window tool to allow for quick testing and debugging
 //Works by calling various functions in GameManager and BoardStateTester
@@ -35,6 +38,8 @@ public class Debugger : EditorWindow
     private DiagSelect SelectDiag;                                   //select which diagonal 
     private int matchToLoad = 0;                                     //index of match to console log the match data
     private int dimensionToSelect;                                   //used for the int slider to select which row/column to test
+    private float betweenMoves = 0.25f;                              //sets the time between moves in the tester
+    private float betweenReset = 1f;                                 //sets the time between resets in the tester for nested routines
     Vector2 scrollPos;                                               //scroll bar position
 
     //create menu item for window
@@ -50,7 +55,7 @@ public class Debugger : EditorWindow
         scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, false);
 
         //vertical space
-        GUILayout.Space(20);
+        GUILayout.Space(30);
 
         #region display match data
         GUILayout.FlexibleSpace();
@@ -73,7 +78,9 @@ public class Debugger : EditorWindow
         #endregion
 
         /**divider line for spacing**/
-        GUILayout.FlexibleSpace();
+
+        //vertical space
+        GUILayout.Space(15);
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         GUILayout.FlexibleSpace();
         /**end divider line **/
@@ -117,7 +124,9 @@ public class Debugger : EditorWindow
 
 
         /**divider line for spacing**/
-        GUILayout.FlexibleSpace();
+
+        //vertical space
+        GUILayout.Space(15);
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         GUILayout.FlexibleSpace();
         /**end divider line **/
@@ -125,26 +134,28 @@ public class Debugger : EditorWindow
 
         #region Board State testing
         /**Section for testing board states **/
-        GUILayout.FlexibleSpace();
+        //vertical space
+        GUILayout.Space(15);
         GUILayout.Label("Board State Tester", EditorStyles.boldLabel);
         EditorGUILayout.Space();
-        EditorGUILayout.HelpBox("Test different board states. Select which player should win. Use the slider to select a row or column to test. Use the drop down to select which diagonal to check for." +
+        EditorGUILayout.HelpBox("Test different board states. Select which player should win. Use the slider to select a specific row or column to test. Use the drop down to select which diagonal to check for. You can also set the speed between test moves" +
             " Board must be generated before using. Will end any match currently being played or exit out of menu", MessageType.Info);
 
         //Test Settings
         playerToWin = (Player)EditorGUILayout.EnumPopup("Player to Win: ", playerToWin);
         dimensionToSelect = EditorGUILayout.IntSlider("Row/Column to Test: ", dimensionToSelect, 0, BoardState.BoardDimension - 1);
-        SelectDiag = (DiagSelect)EditorGUILayout.EnumPopup("Select Diagonal: ", SelectDiag);
+        SelectDiag = (DiagSelect)EditorGUILayout.EnumPopup("Diagonal: ", SelectDiag);
+        betweenMoves = EditorGUILayout.FloatField("Time Between Moves: ", betweenMoves);
         
         EditorGUILayout.Space();
         //row test
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Test Rows", GUILayout.MaxWidth(150), GUILayout.MinHeight(40)))
+        if (GUILayout.Button("Test Row", GUILayout.MaxWidth(150), GUILayout.MinHeight(40)))
         {
             TestRows();
         }
         //column test
-        if (GUILayout.Button("Test Columns", GUILayout.MaxWidth(150), GUILayout.MinHeight(40)))
+        if (GUILayout.Button("Test Column", GUILayout.MaxWidth(150), GUILayout.MinHeight(40)))
         {
             TestColumns();
         }
@@ -152,7 +163,7 @@ public class Debugger : EditorWindow
         EditorGUILayout.Space();
         GUILayout.BeginHorizontal();
         //diagonal test
-        if (GUILayout.Button("Test Diagonals", GUILayout.MaxWidth(150), GUILayout.MinHeight(40)))
+        if (GUILayout.Button("Test Diagonal", GUILayout.MaxWidth(150), GUILayout.MinHeight(40)))
         {
             TestDiagonal();
         }
@@ -162,11 +173,38 @@ public class Debugger : EditorWindow
             TestDraw();
         }
         GUILayout.EndHorizontal();
-        GUILayout.FlexibleSpace();
-        
+        EditorGUILayout.Space(); EditorGUILayout.Space();
+
+        EditorGUILayout.HelpBox("Pressing any UI buttons, generating a map from the debug window , or starting a new test will immediately end any test. When testing all, just simply let it run through. Set the time between test either here or in the BoardStateTester inspector to set the speed between tests", MessageType.Warning);
+        betweenReset = EditorGUILayout.FloatField("Time between tests: ", betweenReset);
+
+        GUILayout.BeginHorizontal();
+        //test all rows
+        if (GUILayout.Button("Test All Rows", GUILayout.MaxWidth(150), GUILayout.MinHeight(40)))
+        {
+            TestAllRows();
+        }
+        //test all columns
+        if (GUILayout.Button("Test All Columns", GUILayout.MaxWidth(150), GUILayout.MinHeight(40)))
+        {
+            TestAllCols();
+        }
+
+        //all diag test
+        if (GUILayout.Button("Test ALL Diags", GUILayout.MaxWidth(150), GUILayout.MinHeight(40)))
+        {
+            TestAllDiags();
+        }
+        GUILayout.EndHorizontal();
+
+        if (GUILayout.Button("TEST ALL", GUILayout.MinHeight(40)))
+        {
+            TestAll();
+        }
+
 
         //vertical space
-        GUILayout.Space(20);
+        GUILayout.Space(30);
 
 
         EditorGUILayout.EndScrollView();
@@ -214,7 +252,6 @@ public class Debugger : EditorWindow
         }
         else
         {
-            Debug.Log("Printing Match " + matchToLoad);
             GameDataRecorder.instance.ReportGame(matchToLoad);
         }
     }
@@ -286,6 +323,68 @@ public class Debugger : EditorWindow
         }
     }
 
+    private void TestAllRows()
+    {
+        //see that we're running the application in editor first so we can't run in edit mode
+        if (Application.isPlaying && Application.isEditor)
+        {
+            InitializeTest();
+            //start the test.
+            BoardStateTester.instance.StartAllRowTests();
+        }
+        else
+        {
+            Debug.LogError("Either the application is not playing or it's not being played in the Editor.");
+        }
+    }
+
+    private void TestAllCols()
+    {
+        //see that we're running the application in editor first so we can't run in edit mode
+        if (Application.isPlaying && Application.isEditor)
+        {
+            InitializeTest();
+            //start the test.
+            BoardStateTester.instance.StartAllColTests();
+        }
+        else
+        {
+            Debug.LogError("Either the application is not playing or it's not being played in the Editor.");
+        }
+    }
+
+    private void TestAllDiags()
+    {
+        //see that we're running the application in editor first so we can't run in edit mode
+        if (Application.isPlaying && Application.isEditor)
+        {
+            InitializeTest();
+            //start the test.
+            BoardStateTester.instance.StartAllDiagTests();
+        }
+        else
+        {
+            Debug.LogError("Either the application is not playing or it's not being played in the Editor.");
+        }
+    }
+
+
+    private void TestAll()
+    {
+        //see that we're running the application in editor first so we can't run in edit mode
+        if (Application.isPlaying && Application.isEditor)
+        {
+            InitializeTest();
+            //start the test.
+            BoardStateTester.instance.StartAllTests();
+        }
+        else
+        {
+            Debug.LogError("Either the application is not playing or it's not being played in the Editor.");
+        }
+    }
+
+
     //Repeated bit of code that occurs before every test.
     private void InitializeTest()
     {
@@ -296,6 +395,8 @@ public class Debugger : EditorWindow
         BoardStateTester.instance.StopAllCoroutines();
         GameManager.instance.StartNewGame();
         GameManager.instance.DisableControls();
+        BoardStateTester.instance.timeBetweenMoves = betweenMoves;
+        BoardStateTester.instance.timeBetweenResets = betweenReset;
     }
     #endregion
 
@@ -330,3 +431,4 @@ public class Debugger : EditorWindow
         }
     }
 }
+#endif

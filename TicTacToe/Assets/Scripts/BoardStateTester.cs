@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿#if UNITY_EDITOR
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,11 +7,13 @@ using UnityEngine;
 //Should only compile in editor
 //Kept as a separate monobehaviour due to usage of coroutines to time board testing
 //Called and set from the Debugger Window
+
 public class BoardStateTester : MonoBehaviour
 {
-#if UNITY_EDITOR
+
     public static BoardStateTester instance = null;            //singleton for simple reference getting as this will only be called by the Debugger and reduce problems with getting references in edit vs play mode
     public float timeBetweenMoves = 0.25f;                     //sets how much time between movements when testing
+    public float timeBetweenResets = 2f;                       //time between resetting board in AllTests
     //singleton
     private void Awake()
     {
@@ -43,22 +46,49 @@ public class BoardStateTester : MonoBehaviour
         StartCoroutine("DrawTester");
     }
 
+    public void StartAllRowTests()
+    {
+        StartCoroutine("AllRowTester");
+    }
+
+    public void StartAllColTests()
+    {
+        StartCoroutine("AllColTester");
+    }
+
+    public void StartAllDiagTests()
+    {
+        StartCoroutine("AllDiagTester");
+    }
+
+    public void StartAllTests()
+    {
+        StartCoroutine("AllTester");
+    }
+
+
 
 
     #endregion
 
 
-    /** Board State Checker oroutines
-     * Functions by playing through a row/column/diagonal. 
-     * Use a coroutine in order to simulate faster playing. Pass in a parameter of time to wait in between moves
-     * The starting player should always win. The second turn player will simply place a piece underneath the starting player and should thus never beat the starting player.
-     * If a game doesn't register a victory, it'll spit out a debug.log. The test will spit out a log at the end. 
-     * To make sure this is setup properly, the board MUST be cleared and the starting player set in the debugger method that calls this coroutine. That should be done in Debugger before starting the coroutine.
+    /** Board State Checker Coroutines
+     * The single coroutines work through a simple coroutine to play in a given row, column, diagonal or for draws
+     * The first player to start is set in Debugger. The first player will always win. Simulates a finished game by just playing through that col/row/diag
+     * 
+     * The nested coroutines call a bunch of the single coroutines to play through all the rows, columns, diagonals, or draws
+     * 
+     * The exit points for coroutines are with UI buttons or errors. When that happens, StopAllCoroutine is called, which should stop any test running at the time.
+     * Otherwise, the coroutine will run until finished.
+     * Only one coroutine should be running at a time. They are started in Debugger with a button press but will stop any existing running ones
+     * You can set the settings in the DebugWindow in terms of selecting row/col, which diagonal
+     * You can also set the time between simulated move sand the time between board resets in the DebugWindow. Alternatively, you can find the BoardStateTester object
+     * and set the time through the public values there in the inspector. 
      * **/
 
 
 
-    #region Coroutines
+    #region Single Coroutines for single row or column or diag or draw
     //Checks all rows. Target player is the one who should win
     IEnumerator RowTester(int row)
     {
@@ -269,6 +299,105 @@ public class BoardStateTester : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region Nested Coroutines for multiple rows, columns, or diagonals
+    //Tests all the rows using a nested coroutine
+    IEnumerator AllRowTester()
+    {
+        //iterate over the dimension
+        for (int i = 0; i < BoardState.BoardDimension; i++)
+        {
+            //coroutine reference
+            IEnumerator innerRowRoutine = RowTester(i);
+            //run it
+            while (innerRowRoutine.MoveNext())
+                yield return innerRowRoutine.Current;
+            //wait seconds before exiting the menu
+            yield return new WaitForSeconds(timeBetweenResets);
+            //exit menu and reset board
+            ResetTest();
+        }
+        //enable contorls at the end
+        Debug.Log("Rows Tests Complete");
+        GameManager.instance.EnableControls();
+    }
+
+    //test all the columns
+    IEnumerator AllColTester()
+    {
+        //iterate over the dimension
+        for (int i = 0; i < BoardState.BoardDimension; i++)
+        {
+            //nested coroutine
+            IEnumerator innerColRoutine = ColumnTester(i);
+            //run it
+            while (innerColRoutine.MoveNext())
+                yield return innerColRoutine.Current;
+            //wait seconds before exiting the menu
+            yield return new WaitForSeconds(timeBetweenResets);
+            //exit menu and reset board
+            ResetTest();
+        }
+        //enable contorls at the end
+        Debug.Log("Columns test Complete");
+        GameManager.instance.EnableControls();
+    }
+
+    //test all the diagonals
+    IEnumerator AllDiagTester()
+    {
+        //nested front diagonal routine
+        IEnumerator innerFrontDiag = DiagonalTester((int)Debugger.DiagSelect.Front);
+        while (innerFrontDiag.MoveNext())
+            yield return innerFrontDiag.Current;
+        yield return new WaitForSeconds(timeBetweenResets);
+        ResetTest();
+
+        //nested back diagonal routine
+        IEnumerator innerBackDiag = DiagonalTester((int)Debugger.DiagSelect.Back);
+        while (innerBackDiag.MoveNext())
+            yield return innerBackDiag.Current;
+        yield return new WaitForSeconds(timeBetweenResets);
+        ResetTest();
+        Debug.Log("Diagonals Test Complete");
+        GameManager.instance.EnableControls();
+    }
+
+
+
+    //Nested coroutine of other nested coroutines
+    IEnumerator AllTester()
+    {
+
+        //all rows routine
+        IEnumerator allRowRoutine = AllRowTester();
+        while (allRowRoutine.MoveNext())
+            yield return allRowRoutine.Current;
+
+        //all cols routine
+        IEnumerator allColRoutine = AllColTester();
+        while (allColRoutine.MoveNext())
+            yield return allColRoutine.Current;
+
+        //all dials routine
+        IEnumerator allDiagRoutine = AllDiagTester();
+        while (allDiagRoutine.MoveNext())
+            yield return allDiagRoutine.Current;
+
+        //draw routine
+        IEnumerator innerDrawRoutine = DrawTester();
+        while (innerDrawRoutine.MoveNext())
+            yield return innerDrawRoutine.Current;
+        yield return new WaitForSeconds(timeBetweenResets);
+        ResetTest();
+
+        Debug.Log("All Tests Complete");
+        //remember to enable controls at the end
+        GameManager.instance.EnableControls();
+
+    }
+
 
     #endregion
 
@@ -300,6 +429,15 @@ public class BoardStateTester : MonoBehaviour
             GameManager.instance.DebugWindow("ERROR:  \n  Unable to Spawn Tile. Exiting Test");
             return;
         }
+    }
+
+    //used in nested coroutines to reset the board
+    private void ResetTest()
+    {
+        //basic set up
+        GameManager.instance.StartNewGame();
+        GameManager.instance.DisableControls();
+        GameManager.instance.SwitchCurrentPlayer();
     }
 
     //Checks a board state. Give it string parameters of "Row", "Column", "Diagonal", or "Draw". Dimension only matters for row and column checks
@@ -363,5 +501,6 @@ public class BoardStateTester : MonoBehaviour
     }
 
     #endregion
-#endif
+
 }
+#endif

@@ -3038,6 +3038,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e7e981080c0df048b38243d94a92e88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  timeBetweenMoves: 0.25
+  timeBetweenResets: 2
 --- !u!4 &1202345561
 Transform:
   m_ObjectHideFlags: 0
