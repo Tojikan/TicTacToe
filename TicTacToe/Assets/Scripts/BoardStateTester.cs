@@ -10,7 +10,7 @@ public class BoardStateTester : MonoBehaviour
 {
 #if UNITY_EDITOR
     public static BoardStateTester instance = null;            //singleton for simple reference getting as this will only be called by the Debugger and reduce problems with getting references in edit vs play mode
-    public bool failTest;                                      //bool to intentionally fail tests
+    public float timeBetweenMoves = 0.25f;                     //sets how much time between movements when testing
     //singleton
     private void Awake()
     {
@@ -23,24 +23,24 @@ public class BoardStateTester : MonoBehaviour
     #region CoRoutine Call Methods
     //Ran into some issues trying to start coroutines from an EditorWindow object, so just have the buttons route to these methods that'll call the coroutines.
 
-    public void StartRowTest(float wait)
+    public void StartRowTest(int row)
     {
-        StartCoroutine("RowTester", wait);
+        StartCoroutine("RowTester", row);
     }
 
-    public void StartColumnTest(float wait)
+    public void StartColumnTest(int col)
     {
-        StartCoroutine("ColumnTester", wait);
+        StartCoroutine("ColumnTester", col);
     }
 
-    public void StartDiagonalTest(float wait)
+    public void StartDiagonalTest(int diag)
     {
-        StartCoroutine("DiagonalTester", wait);
+        StartCoroutine("DiagonalTester", diag);
     }
 
-    public void StartDrawTest(float wait)
+    public void StartDrawTest()
     {
-        StartCoroutine("DrawTester", wait);
+        StartCoroutine("DrawTester");
     }
 
 
@@ -53,257 +53,179 @@ public class BoardStateTester : MonoBehaviour
      * Use a coroutine in order to simulate faster playing. Pass in a parameter of time to wait in between moves
      * The starting player should always win. The second turn player will simply place a piece underneath the starting player and should thus never beat the starting player.
      * If a game doesn't register a victory, it'll spit out a debug.log. The test will spit out a log at the end. 
-     * To make sure this is setup properly, the board MUST be cleared and the starting player set in the debugger method that calls this coroutine. That should all be set before starting the coroutine.
+     * To make sure this is setup properly, the board MUST be cleared and the starting player set in the debugger method that calls this coroutine. That should be done in Debugger before starting the coroutine.
      * **/
 
 
 
     #region Coroutines
-    //Checks all rows.
-    IEnumerator RowTester(float seconds)
+    //Checks all rows. Target player is the one who should win
+    IEnumerator RowTester(int row)
     {
-        //counts how many successful row checks we have
-        int count = 0;
-        //store the player we're measuring. The current player should be set to the one we want to check when pressing the button in Debugger.
-        int playerCheck = (int)GameManager.CurrentPlayer;
-        //Stop controls
-        GameManager.instance.DisableControls();
-        
-        //A string that logs the results of all row tests.
-        string consoleLog = "==========ROW TEST RESULT===========" + "\n \n" + "PLAYER TO WIN: " + (int)GameManager.CurrentPlayer + " \n";
+        //get the row for the other player, either below or above the target row 
+        int otherRow = (row + 1 >= BoardState.BoardDimension) ? row - 1 : row + 1;
+
+        //player to win. Used for error checks
+        int player = (int)GameManager.CurrentPlayer;
 
         //iterate over each row in the grid
-        for (int row = 0; row < BoardState.BoardDimension; row++)
+        for (int i = 0; i < BoardState.BoardDimension; i++)
         {
-            //add text to log
-            consoleLog += "ROW " + row + ": ";
-            //iterate over each column
-            for (int col = 0; col < BoardState.BoardDimension; col++)
+            //wait between pieces
+            yield return new WaitForSeconds(timeBetweenMoves);
+
+            //add piece for target player
+            AddTestPosition(row, i);
+            if (CheckBoardState("Row", row))
             {
-                AddTestPosition(row, col);
-
-                yield return new WaitForSeconds(seconds);
-
-                //checks if we reached the end of the row and if so, checks row for success
-                if (col == BoardState.BoardDimension - 1 && BoardState.CheckRow(row, playerCheck))
-                {
-                    Debug.Log("Registered victory for Player: " + playerCheck);
-                    consoleLog += "Success!";
-                    //start over again
-                    GameManager.instance.BoardStateTestReset();
-                    GameManager.instance.SwitchCurrentPlayer();
-                    //increment the success count
-                    count++;
-                    break;
-                }
-                //if not success, then we have a failure
-                else if (col == BoardState.BoardDimension - 1 && !BoardState.CheckRow(row, playerCheck))
-                {
-                    Debug.LogError("Failed to register a victory for player " + playerCheck);
-                    consoleLog += "Failure";
-                    GameManager.instance.BoardStateTestReset();
-                    break;
-                }
-
-                //set a position and tile for the other player right below the target player. Since this player goes second, they should never win
-                int otherRow = row + 1;
-                //if we're at the bottom of the grid, the other player should spawn at the top instead of trying to spawn below
-                if (otherRow >= BoardState.BoardDimension)
-                    otherRow = 0;
-                AddTestPosition(otherRow, col);
-                yield return new WaitForSeconds(seconds);
+                Debug.Log("Successfully logged Victory for Player :" + (int)GameManager.CurrentPlayer + " in Row " + row);
+                GameManager.instance.GameFinishDebug();
+                yield break;
             }
-            consoleLog += " \n";
+            GameManager.instance.SwitchCurrentPlayer();
+
+            //wait between pieces
+            yield return new WaitForSeconds(timeBetweenMoves);
+
+            //add piece for other player and then check
+            AddTestPosition(otherRow, i);
+            if (CheckBoardState("Row", otherRow))
+            {
+                Debug.LogError("Did not detect a victory for player " + player + ".");
+                GameManager.instance.GameFinishDebug();
+                yield break;
+            }
+            GameManager.instance.SwitchCurrentPlayer();
         }
-        //log the whole report
-        Debug.Log(consoleLog);
-        //open a debug window that summarizes our findings using Count
-        GameManager.instance.DebugWindow("Tested all the Rows to see if Player " + playerCheck + " won " + BoardState.BoardDimension + " times. \n \n" + "Player " + playerCheck + " won " + count + " times.");
-        yield return null;
+        Debug.LogError("Did not detect a victory for player " + player + ".");
     }
 
     //Checks all columns
-    IEnumerator ColumnTester (float seconds)
+    IEnumerator ColumnTester (int col)
     {
-        //counts how many successful checks we have
-        int count = 0;
+        //get the col for the other player, either below or above the target col 
+        int otherCol = (col + 1 >= BoardState.BoardDimension) ? col - 1 : col + 1;
+
+        //player to win. Used for error checks
+        int player = (int)GameManager.CurrentPlayer;
+
+
+        //iterate over each row in the grid
+        for (int i = 0; i < BoardState.BoardDimension; i++)
+        {
+            //wait between pieces
+            yield return new WaitForSeconds(timeBetweenMoves);
+
+            //add piece for target player
+            AddTestPosition(i, col);
+            if (CheckBoardState("Column", col))
+            {
+                GameManager.instance.GameFinishDebug();
+                Debug.Log("Successfully logged Victory for Player :" + (int)GameManager.CurrentPlayer + " in Col " + col);
+                yield break;
+            }
+            GameManager.instance.SwitchCurrentPlayer();
+
+            //wait between pieces
+            yield return new WaitForSeconds(timeBetweenMoves);
+
+            //add piece for other player and then check
+            AddTestPosition(i, otherCol);
+            if (CheckBoardState("Column", otherCol))
+            {
+                Debug.LogError("Did not detect a victory for player " + player + ".");
+                GameManager.instance.GameFinishDebug();
+                yield break;
+            }
+            GameManager.instance.SwitchCurrentPlayer();
+        }
+        Debug.LogError("Did not detect a victory for player " + player + ".");
+    }
+
+    //Check both diagonals. Pass an int (from an Enum in Debugger) to determine which diagonal to select
+    IEnumerator DiagonalTester(int diag)
+    {
         //store the player we're measuring. The current player should be set to the one we want to check when pressing the button in Debugger.
         int playerCheck = (int)GameManager.CurrentPlayer;
-        //Stop controls
-        GameManager.instance.DisableControls();
 
-        //A string that logs the results of all column tests.
-        string consoleLog = "==========COLUMN TEST RESULT===========" + "\n \n" + "PLAYER TO WIN: " + (int)GameManager.CurrentPlayer + " \n";
-
-        //iterate over each column in the grid
-        for (int col = 0; col < BoardState.BoardDimension; col++)
+        if (diag == (int)Debugger.DiagSelect.Front)
         {
-            //add text to log
-            consoleLog += "COLUMN " + col + ": ";
-            //iterate over each column
-            for (int row = 0; row < BoardState.BoardDimension; row++)
+            for (int col = 0; col < BoardState.BoardDimension; col++)
             {
-                //set position in the board array and also spawns a tile
+                //wait
+                yield return new WaitForSeconds(timeBetweenMoves);
+
+                //get a row position
+                int row = BoardState.BoardDimension - 1 - col;
+                //set new position in diagonal
                 AddTestPosition(row, col);
 
-                yield return new WaitForSeconds(seconds);
+                //checks if we reached the end of the row and if so, checks diagonal
+                if (BoardState.CheckFrontDiagonal((int)GameManager.CurrentPlayer))
+                {
+                    Debug.Log("Successfully logged a Front Diagonal Victory for Player :" + (int)GameManager.CurrentPlayer);
+                    GameManager.instance.GameFinishDebug();
+                    yield break;
+                }
+                //switch player
+                GameManager.instance.SwitchCurrentPlayer();
 
-                //checks if we reached the end of the row and if so, checks row for success
-                if (row == BoardState.BoardDimension - 1 && BoardState.CheckColumn(col, playerCheck))
-                {
-                    Debug.Log("Registered victory for Player: " + playerCheck);
-                    consoleLog += "Success!";
-                    //start over again
-                    GameManager.instance.BoardStateTestReset();
-                    GameManager.instance.SwitchCurrentPlayer();
-                    //increment the success count
-                    count++;
-                    break;
-                }
-                //if not success, then we have a failure
-                else if (row == BoardState.BoardDimension - 1 && !BoardState.CheckColumn(col, playerCheck))
-                {
-                    Debug.LogError("Failed to register a victory for player " + playerCheck);
-                    consoleLog += "Failure";
-                    GameManager.instance.BoardStateTestReset();
-                    break;
-                }
+                //wait
+                yield return new WaitForSeconds(timeBetweenMoves);
 
                 //set a position and tile for the other player right next the target player. Since this player goes second, they should never win
-                int otherCol = col + 1;
-                //if we're at the end of the grid, the other player should spawn at the start instead of trying to spawn next to it
-                if (otherCol >= BoardState.BoardDimension)
-                    otherCol = 0;
-                AddTestPosition(row, otherCol);
-                yield return new WaitForSeconds(seconds);
+                int otherRow = (row - 1 >= 0) ? row - 1 : row + 1;
+                AddTestPosition(otherRow, col);
+                //switch
+                GameManager.instance.SwitchCurrentPlayer();
             }
-            consoleLog += " \n";
+            Debug.LogError("Failed to register a Front Diagonal victory for player " + playerCheck);
+            GameManager.instance.DebugWindow("ERROR: \n No Diagonal Victory registered.");
         }
-        //log the whole report
-        Debug.Log(consoleLog);
-        //open a debug window that summarizes our findings using Count
-        GameManager.instance.DebugWindow("Tested all the Columns to see if Player " + playerCheck + " won " + BoardState.BoardDimension + " times. \n \n" + "Player " + playerCheck + " won " + count + " times.");
-        yield return null;
+
+        if (diag == (int)Debugger.DiagSelect.Back)
+        {
+            for (int i = 0; i < BoardState.BoardDimension; i++)
+            {
+                yield return new WaitForSeconds(timeBetweenMoves);
+
+                //set new position in diagonal
+                AddTestPosition(i, i);
+
+                //checks if we reached the end of the row and if so, checks diagonal
+                if (BoardState.CheckBackDiagonal((int)GameManager.CurrentPlayer))
+                {
+                    Debug.Log("Successfully logged a Back Diagonal Victory for Player :" + (int)GameManager.CurrentPlayer);
+                    GameManager.instance.GameFinishDebug();
+                    yield break;
+                }
+                //switch player
+                GameManager.instance.SwitchCurrentPlayer();
+
+                //wait
+                yield return new WaitForSeconds(timeBetweenMoves);
+
+                //set a position and tile for the other player right next the target player. Since this player goes second, they should never win
+                int otherI = (i + 1 >= BoardState.BoardDimension) ? i - 1 : i + 1;
+                AddTestPosition(otherI, i);
+                //switch player
+                GameManager.instance.SwitchCurrentPlayer();
+            }
+            Debug.LogError("Failed to register a Back Diagonal victory for player " + playerCheck);
+            GameManager.instance.DebugWindow("ERROR: \n No Diagonal Victory registered.");
+        }
+        Debug.LogError("Invalid Diagonal Input" + playerCheck);
+        GameManager.instance.DebugWindow("ERROR: \n Invalid Diagonal Input.");
     }
 
-    //Check both diagonals
-    IEnumerator DiagonalTester(float seconds)
-    {
-        //tracks which diagonal was successful
-        bool front = false;
-        bool back = false;
-        //store the player we're measuring. The current player should be set to the one we want to check when pressing the button in Debugger.
-        int playerCheck = (int)GameManager.CurrentPlayer;
-        //Stop controls
-        GameManager.instance.DisableControls();
-
-        //A string that logs the results of all column tests.
-        string consoleLog = "==========DIAGONAL TEST RESULT===========" + "\n \n" + "PLAYER TO WIN: " + (int)GameManager.CurrentPlayer + " \n";
-
-        //add text to log
-        consoleLog += "FRONT DIAGONAL /:  ";
-        //iterate over each column in the grid
-        for (int col = 0; col < BoardState.BoardDimension; col++)
-        {
-            //set new position in diagonal
-            int row = BoardState.BoardDimension - 1 -col;
-
-            AddTestPosition(row, col);
-
-            yield return new WaitForSeconds(seconds);
-
-            //checks if we reached the end of the row and if so, checks diagonal
-            if (col == BoardState.BoardDimension - 1 && BoardState.CheckFrontDiagonal(playerCheck))
-            {
-                Debug.Log("Registered / Victory for Player: " + playerCheck);
-                consoleLog += "Success! \n";
-                //start over again
-                GameManager.instance.BoardStateTestReset();
-                GameManager.instance.SwitchCurrentPlayer();
-                //set the success bool check
-                front = true;
-                break;
-            }
-            //if not success, then we have a failure
-            else if (col == BoardState.BoardDimension - 1 && !BoardState.CheckFrontDiagonal(playerCheck))
-            {
-                Debug.LogError("Failed to register a / victory for player " + playerCheck);
-                consoleLog += "Failure \n";
-                //we have a fail
-                front = false;
-                GameManager.instance.BoardStateTestReset();
-                break;
-            }
-
-            //set a position and tile for the other player right next the target player. Since this player goes second, they should never win
-            int otherRow = row - 1;
-            AddTestPosition(otherRow, col);
-            yield return new WaitForSeconds(seconds);
-        }
-
-        //add text to log
-        consoleLog += "BACK DIAGONAL \\ :  ";
-        //iterate over each column in the grid
-        for (int row = 0; row < BoardState.BoardDimension; row++)
-        {
-            //set new position in diagonal
-            int col =  row;
-            AddTestPosition(row, col);
-
-            yield return new WaitForSeconds(seconds);
-
-            //checks if we reached the end of the row and if so, checks diagonal
-            if (row == BoardState.BoardDimension - 1 && BoardState.CheckBackDiagonal(playerCheck))
-            {
-                Debug.Log("Registered \\ Victory for Player: " + playerCheck);
-                consoleLog += "Success! \n";
-                //start over again
-                GameManager.instance.BoardStateTestReset();
-                GameManager.instance.SwitchCurrentPlayer();
-                //set the success bool check
-                back = true;
-                break;
-            }
-            //if not success, then we have a failure
-            else if (row == BoardState.BoardDimension - 1 && !BoardState.CheckBackDiagonal(playerCheck))
-            {
-                Debug.LogError("Failed to register a \\ victory for player " + playerCheck);
-                consoleLog += "Failure \n";
-                //we have a fail
-                back = false;
-                GameManager.instance.BoardStateTestReset();
-                break;
-            }
-
-            //set a position and tile for the other player right next the target player. Since this player goes second, they should never win
-            int otherRow = row + 1;
-            AddTestPosition(otherRow, col);
-            yield return new WaitForSeconds(seconds);
-        }
-
-        //log the whole report
-        Debug.Log(consoleLog);
-        //open a debug window that summarizes our findings using Count
-        GameManager.instance.DebugWindow("Successful Front Diagonal / : " + front + " \n Successful Back Diagonal  \\ : " + back);
-        yield return null;
-    }
-
-    //Checks for diagonals
     //Currently does a single check of same col placements followed by an alternating col at the end for a guaranteed draw. Then tests all the check row/col/diag functions to see if any detect a result
     //basically tests to see if the game detects a victory when it's not there
-    IEnumerator DrawTester(float seconds)
+    IEnumerator DrawTester()
     {
-        //Check to determine if we have a draw or not.
-       bool drawCheck = false;
         //store dimension so we can quit calling BoardState all the time
-       int dimension = BoardState.BoardDimension;
-       //Stop controls
-       GameManager.instance.DisableControls();
-        //string that reports result of the test
-        string consoleLog = "===============DRAW TEST RESULT================= \n";
-       //store the initial value of the player to check
-       int playerCheck = (int)GameManager.CurrentPlayer;
-
+        int dimension = BoardState.BoardDimension;
+        //store the player we're checking for
+        int playerCheck = (int)GameManager.CurrentPlayer;
 
         //iterate over each row to generate a pattern
         for (int row = 0; row < dimension; row++)
@@ -313,71 +235,38 @@ public class BoardStateTester : MonoBehaviour
                 GameManager.instance.SwitchCurrentPlayer();
 
             //switches it back at the very last row to make sure we get a draw
-            //set fail test to false to fail the draw test
-            if (row == dimension - 1 && !failTest)
+            if (row == dimension - 1)
             {
                 GameManager.instance.SwitchCurrentPlayer();
             }
 
-            //populate over the row
+            //iterate over the row
             for (int col = 0; col < dimension; col++)
             {
                 //set position in the board array and also spawns a tile
                 AddTestPosition(row, col);
-                yield return new WaitForSeconds(seconds);
+                GameManager.instance.SwitchCurrentPlayer();
+                //wait
+                yield return new WaitForSeconds(timeBetweenMoves);
+
+                //check if we won a row or column by accident somehow
+                if (CheckBoardState("Row", row) || CheckBoardState("Column", row))
+                {
+                    Debug.LogError("A victory was detected when there should be none.");
+                    GameManager.instance.GameFinishDebug();
+                    yield break;
+                }
             }
         }
-
-        //Checks for any draws
-        for (int i = 0; i < BoardState.BoardDimension; i++)
+        //checks all rows, cols, and diags for a draw
+        if (CheckBoardState("Draw", 0))
         {
-            //row check and log
-            if (BoardState.CheckRow(i, (int)GameManager.Player.P1) || BoardState.CheckRow(i, (int)GameManager.Player.P2))
-            {
-                Debug.LogError("Test Failure: A Non-Draw outcome was detected in a row! ");
-                consoleLog += "ROW " + i + ": FAILED  \n";
-                drawCheck = true;
-            }
-            else
-            {
-                consoleLog += "ROW " + i + ": SUCCESSFUL \n";
-            }
-            //col check and log
-            if (BoardState.CheckColumn(i, (int)GameManager.Player.P1) || BoardState.CheckColumn(i, (int)GameManager.Player.P2))
-            {
-                Debug.LogError("Test Failure: A Non-Draw outcome was detected in a Column! ");
-                consoleLog += "COLUMN " + i + ": FAILED  \n";
-                drawCheck = true;
-            }
-            else
-            {
-                consoleLog += "COLUMN " + i + ": SUCCESSFUL \n";
-            }
+            GameManager.instance.GameDrawDebug();
         }
-
-        //diag check and log
-        if (BoardState.CheckFrontDiagonal((int)GameManager.Player.P1) || BoardState.CheckFrontDiagonal((int)GameManager.Player.P2))
+        else if (!CheckBoardState("Draw",0))
         {
-            Debug.LogError("Test Failure: A Non-Draw outcome was detected in a Diagonal! ");
-            consoleLog += "DIAGONALS : FAILED  \n";
-            drawCheck = true;
+            GameManager.instance.DebugWindow("ERROR: \n A draw was not detected!");
         }
-        else
-        {
-            consoleLog += "DIAGONALS : SUCCESSFUL \n";
-        }
-
-        //log the whole report
-        Debug.Log(consoleLog);
-        //open a debug window that summarizes our findings using Count
-        string message;
-        if (drawCheck)
-            message = "Draw Test Failure:  \n   The game detected a Victory";
-        else
-            message = "Draw Test Success:  \n   The game did not detect a victory!";
-        GameManager.instance.DebugWindow(message);
-        yield return null;
-
     }
 
 
@@ -388,9 +277,89 @@ public class BoardStateTester : MonoBehaviour
     //adds a position in the board array and spawns a tile in the corresponding empty tile. Switches player at the end. 
     private void AddTestPosition(int row, int col)
     {
-        BoardState.SetPositionInBoard(new Vector2Int(row, col), (int)GameManager.CurrentPlayer);
-        BoardState.EmptyTileArray[row, col].SpawnTile();
-        GameManager.instance.SwitchCurrentPlayer();
+        if (BoardState.BoardPositions[row, col] != 0)
+        {
+            StopAllCoroutines();
+            GameDataRecorder.instance.AddPlayerMove(new Vector2Int(-2, -2));
+            GameDataRecorder.instance.RecordGameFinish(4);
+            GameManager.instance.DebugWindow("ERROR:  \n  Space is already occupied by another Tile. Exiting Test");
+            return;
+        }
+        BoardState.AddPosition(new Vector2Int(row, col), (int)GameManager.CurrentPlayer);
+        GameDataRecorder.instance.AddPlayerMove(new Vector2Int(row, col));
+        try
+        {
+            BoardState.EmptyTileArray[row, col].SpawnTile();
+        }
+        catch (System.Exception e)
+        {
+            StopAllCoroutines();
+            Debug.LogError(e);
+            GameDataRecorder.instance.AddPlayerMove(new Vector2Int(-2, -2));
+            GameDataRecorder.instance.RecordGameFinish(4);
+            GameManager.instance.DebugWindow("ERROR:  \n  Unable to Spawn Tile. Exiting Test");
+            return;
+        }
+    }
+
+    //Checks a board state. Give it string parameters of "Row", "Column", "Diagonal", or "Draw". Dimension only matters for row and column checks
+    //If Draw return a false, then something achieved victory
+    private bool CheckBoardState(string check, int dimension)
+    {
+        if (check != "Row" && check != "Column" && check!= "Diagonal" && check != "Draw")
+        {
+            Debug.LogError("Invalid board state to check");
+            return false;
+        }
+
+        if (check == "Row")
+        {
+            if (BoardState.CheckRow(dimension, (int)GameManager.CurrentPlayer))
+            {
+                return true;
+            }
+            return false;
+        }
+
+
+        else if (check == "Column")
+        {
+            if (BoardState.CheckColumn(dimension, (int)GameManager.CurrentPlayer))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        else if (check == "Diagonal")
+        {
+            if (BoardState.CheckBackDiagonal((int)GameManager.CurrentPlayer))
+            {
+                return true;
+            }
+            if (BoardState.CheckFrontDiagonal((int)GameManager.CurrentPlayer))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        else if (check == "Draw")
+        {
+            for (int i = 0; i < BoardState.BoardDimension; i++)
+            {
+                if (BoardState.CheckColumn(i, (int)GameManager.Player.P1) || BoardState.CheckRow(i, (int)GameManager.Player.P1) ||
+                    BoardState.CheckColumn(i, (int)GameManager.Player.P2) || BoardState.CheckRow(i, (int)GameManager.Player.P2))
+                    return false;
+                    
+            }
+            if (BoardState.CheckBackDiagonal((int)GameManager.CurrentPlayer) || BoardState.CheckFrontDiagonal((int)GameManager.CurrentPlayer))
+                return false;
+            else
+                return true;
+        }
+
+        return false; 
     }
 
     #endregion

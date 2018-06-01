@@ -79,15 +79,14 @@ public class GameManager : MonoBehaviour
     {
         //prevent player input between games 
         DisableControls();
-        //Hide the select window
-        selectSizeWindow.SetActive(false);
+        //Hides all windows
+        UIManager.ShowGameUI();
         //Generate the board and the board array
         boardGeneration.GenerateBoard();
         BoardState.SetBoardArray();
         //Create a new match in the game data
         GameDataRecorder.instance.AddNewMatch(PlayerOneIcon, PlayerTwoIcon, BoardState.BoardDimension, (int)currentPlayer);
         FadePlayerScores();
-        UIManager.ShowGameUI();
         EnableControls();
     }
 
@@ -96,7 +95,7 @@ public class GameManager : MonoBehaviour
     {
         if (BoardState.CheckIfGameOver(tileValue,(int)currentPlayer))
         {
-            GameOver();
+            GameFinish();
             return;
         }
 
@@ -175,7 +174,7 @@ public class GameManager : MonoBehaviour
     }
 
     //Called when a game over is detected. Switches current player for the next match
-    private void GameOver()
+    private void GameFinish()
     {
         DisableControls();
         GameDataRecorder.instance.RecordGameFinish((int)currentPlayer);
@@ -191,9 +190,8 @@ public class GameManager : MonoBehaviour
     {
         DisableControls();
         GameDataRecorder.instance.RecordGameFinish(4);
-        Debug.LogError("ERROR: Unable to write move to board grid. Exiting...");
         GameDataRecorder.instance.ReportGame(GameDataRecorder.instance.MatchList.Count - 1);
-        UIManager.BackToSetup();
+        DebugWindow("ERROR: Unable to write move to board grid. Exiting...");
         AudioManager.instance.PlayDraw();
         return;
     }
@@ -202,6 +200,10 @@ public class GameManager : MonoBehaviour
     public void Surrender()
     {
         DisableControls();
+#if UNITY_EDITOR
+        //stop any coroutines that are running if using the debugger
+        BoardStateTester.instance.StopAllCoroutines();
+#endif
         GameDataRecorder.instance.AddPlayerMove(new Vector2Int(-1, -1));
         SwitchCurrentPlayer();
         GameDataRecorder.instance.RecordGameFinish((int)CurrentPlayer + 1);
@@ -216,23 +218,25 @@ public class GameManager : MonoBehaviour
     public void NewGame()
     {
         DisableControls();
+#if UNITY_EDITOR
+        //stop any coroutines that are running if using the debugger
+        BoardStateTester.instance.StopAllCoroutines();
+#endif
         GameDataRecorder.instance.AddPlayerMove(new Vector2Int(-2, -2));
         GameDataRecorder.instance.RecordGameFinish(0);
         GameDataRecorder.instance.ReportGame(GameDataRecorder.instance.MatchList.Count - 1);
         UIManager.BackToSetup();
     }
 
-#if UNITY_EDITOR
+    //open a debug window
     public void DebugWindow(string message)
     {
         DisableControls();
         ClearBoard();
         UIManager.DebugWindowMessage(message);
-
     }
-#endif
 
-#endregion
+    #endregion
 
     #region General functionalities for setting the game
     //allow mouse clicks on empty tiles to register
@@ -268,4 +272,21 @@ public class GameManager : MonoBehaviour
     }
 #endif
     #endregion
+
+#if UNITY_EDITOR
+    #region Debug Tools used during BoardState Test
+
+    public void GameFinishDebug()
+    {
+        GameFinish();
+    }
+
+    public void GameDrawDebug()
+    {
+        GameDraw();
+    }
+
+
+    #endregion
+#endif
 }

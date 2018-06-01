@@ -83,7 +83,7 @@ public static class BoardState
     #endregion
 
 #if UNITY_EDITOR
-    #region setup and manipulate the list that tracks the empty tiles that are present on the screen. Used for the Debugger, only present in the unity editor
+    #region setup and manipulate the list that tracks the empty tiles that are present on the screen. Used only Board State Tests
     /**
      * Because the board array is generated from a Vector 2D assigned separately to each empty tile upon instantiation, we can piggy back on those values to generate
      * another 2D array of empty tiles using those same values as indices. As a result, they should match
@@ -118,13 +118,11 @@ public static class BoardState
     {
         if (CheckColumn(position.y, player))
         {
-            Debug.Log("Player " + player + " has won!");
             return true;
         }
 
         if (CheckRow(position.x, player))
         {
-            Debug.Log("Player " + player + " has won!");
             return true;
         }
 
@@ -133,7 +131,6 @@ public static class BoardState
         {
             if (CheckFrontDiagonal(player) || CheckBackDiagonal(player))
             {
-                Debug.Log("Player " + player + " has won!");
                 return true;
             }
         }
@@ -145,7 +142,6 @@ public static class BoardState
     {
         if (boardCount >= boardPositions.Length)
         {
-            Debug.Log("Draw!");
             return true;
         }
         else

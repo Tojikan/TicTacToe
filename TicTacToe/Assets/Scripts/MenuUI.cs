@@ -126,6 +126,9 @@ public class MenuUI : MonoBehaviour
     //second button - goes back to icon select window.
     public void BackToSetup()
     {
+#if UNITY_EDITOR
+        BoardStateTester.instance.StopAllCoroutines();
+#endif 
         ClearPanel();
         GameManager.instance.ClearBoard();
         ShowPanel();
@@ -135,12 +138,14 @@ public class MenuUI : MonoBehaviour
     //starts a new game with same settings
     public void PlayAgain()
     {
+#if UNITY_EDITOR
+        BoardStateTester.instance.StopAllCoroutines();
+#endif 
         ClearPanel();
         HidePanel();
         GameManager.instance.StartNewGame();
     }
 
-#if UNITY_EDITOR
     //Displays a debug window message
     public void DebugWindowMessage(string message)
     {
@@ -149,7 +154,6 @@ public class MenuUI : MonoBehaviour
         debugText.text = message;
         debugWindow.SetActive(true);
     }
-#endif
 #endregion
 
     #region Window for setting the grid dimension. Each onClick will set the board dimension

@@ -65,24 +65,4 @@ public class PlayerController : MonoBehaviour
 
 
     #endregion
-
-    #region deprecated
-
-    ////create a new player tile at the current position for the current player's turn. Pass in the Vector3 position of where to spawn (the position of the tile the player clicked on)
-    //private void CreateNewPlayerTile(Vector3 position)
-    //{
-    //    //the selected tile, matched to the index of the playerIcons array object.
-    //    int playerTile = (GameManager.CurrentPlayer == GameManager.Player.P1) ? GameManager.instance.PlayerOneIcon : GameManager.instance.PlayerTwoIcon;
-    //    playerTile = Mathf.Clamp(playerTile, 0, 3);
-
-    //    GameObject tilePrefab;
-    //    //decide which size icon to use for instantiating
-    //    if (BoardState.BoardDimension < 5)
-    //        tilePrefab = playerIcons.largeIcons[playerTile];
-    //    else
-    //        tilePrefab = playerIcons.smallIcons[playerTile];
-
-    //    GameObject newPlayerTile = Instantiate(tilePrefab, position, Quaternion.identity, board.transform);
-    //}
-    #endregion
 }

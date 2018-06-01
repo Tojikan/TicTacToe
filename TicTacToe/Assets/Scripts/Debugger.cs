@@ -28,9 +28,13 @@ public class Debugger : EditorWindow
     }                                       //base enum for selecting an icon
     private IconSelect PlayerOne;                                    //select player one icon for new board generation
     private IconSelect PlayerTwo;                                    //select player two icon for new board generation
-    private float timeBetweenMoves = 1f;                             //gives the time in seconds between placing new pieces during a board state check
+    public enum DiagSelect
+    {
+        Front, Back
+    }                                        //base for selecting which diagonal to test
+    private DiagSelect SelectDiag;                                   //select which diagonal 
     private int matchToLoad = 0;                                     //index of match to console log the match data
-    private bool failTest = false;                                   //set it so you can intentionally fail board state test
+    private int dimensionToSelect;                                   //used for the int slider to select which row/column to test
     Vector2 scrollPos;                                               //scroll bar position
 
     //create menu item for window
@@ -42,8 +46,6 @@ public class Debugger : EditorWindow
 
     private void OnGUI()
     {
-
-
         //scroll pos
         scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, false);
 
@@ -56,7 +58,7 @@ public class Debugger : EditorWindow
         EditorGUILayout.Space();
         EditorGUILayout.HelpBox("Print specified match data (zero index) or all match data into the console. ", MessageType.Info);
         EditorGUILayout.Space();
-        matchToLoad = EditorGUILayout.IntField("Enter a match number to Print.", matchToLoad);
+        matchToLoad = EditorGUILayout.IntField("Enter a match number:", matchToLoad);
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("Print Single Match Data", GUILayout.MaxWidth(150), GUILayout.MinHeight(40)))
         {
@@ -82,7 +84,7 @@ public class Debugger : EditorWindow
         GUILayout.Label("Generate a New Board", EditorStyles.boldLabel);
         EditorGUILayout.Space();
         EditorGUILayout.HelpBox("Generate a new board. Functions similarly to starting a new game. " +
-            "Enter play mode, select settings, and press the button to generate a new board.", MessageType.Info);
+            "Enter play mode, select settings, and press the button to generate a new board. Can generate at any time during the game but will end any match being played.", MessageType.Info);
         EditorGUILayout.Space();
         //Enter data
         newGridSize = (GridSelect)EditorGUILayout.EnumPopup("New Board Dimensions: ", newGridSize);
@@ -126,14 +128,14 @@ public class Debugger : EditorWindow
         GUILayout.FlexibleSpace();
         GUILayout.Label("Board State Tester", EditorStyles.boldLabel);
         EditorGUILayout.Space();
-        EditorGUILayout.HelpBox("Test if Board States are properly detected. Select a player to check victory for. Then select time in seconds between simulated moves. " +
-            "Board must be generated or it will use default values.", MessageType.Info);
+        EditorGUILayout.HelpBox("Test different board states. Select which player should win. Use the slider to select a row or column to test. Use the drop down to select which diagonal to check for." +
+            " Board must be generated before using. Will end any match currently being played or exit out of menu", MessageType.Info);
 
-        //change player to win 
+        //Test Settings
         playerToWin = (Player)EditorGUILayout.EnumPopup("Player to Win: ", playerToWin);
-        //set time between moves
-        timeBetweenMoves = EditorGUILayout.FloatField("Time Between Moves: ", timeBetweenMoves);
-        failTest = EditorGUILayout.Toggle("Fail Draw Test: ", failTest);
+        dimensionToSelect = EditorGUILayout.IntSlider("Row/Column to Test: ", dimensionToSelect, 0, BoardState.BoardDimension - 1);
+        SelectDiag = (DiagSelect)EditorGUILayout.EnumPopup("Select Diagonal: ", SelectDiag);
+        
         EditorGUILayout.Space();
         //row test
         GUILayout.BeginHorizontal();
@@ -161,13 +163,14 @@ public class Debugger : EditorWindow
         }
         GUILayout.EndHorizontal();
         GUILayout.FlexibleSpace();
-        #endregion
+        
 
         //vertical space
         GUILayout.Space(20);
 
 
         EditorGUILayout.EndScrollView();
+        #endregion
     }
 
     #region Match printing methods
@@ -229,7 +232,7 @@ public class Debugger : EditorWindow
         {
             InitializeTest();
             //start the test.
-            BoardStateTester.instance.StartColumnTest(timeBetweenMoves);
+            BoardStateTester.instance.StartColumnTest(dimensionToSelect);
         }
         else
         {
@@ -245,7 +248,7 @@ public class Debugger : EditorWindow
         {
             InitializeTest();
             //start the test.
-            BoardStateTester.instance.StartRowTest(timeBetweenMoves);
+            BoardStateTester.instance.StartRowTest(dimensionToSelect);
         }
         else
         {
@@ -259,10 +262,8 @@ public class Debugger : EditorWindow
         if (Application.isPlaying && Application.isEditor)
         {
             InitializeTest();
-            //Set the fail test bool
-            BoardStateTester.instance.failTest = failTest;
             //start the test.
-            BoardStateTester.instance.StartDrawTest(timeBetweenMoves);
+            BoardStateTester.instance.StartDrawTest();
         }
         else
         {
@@ -277,7 +278,7 @@ public class Debugger : EditorWindow
         {
             InitializeTest();
             //start the test.
-            BoardStateTester.instance.StartDiagonalTest(timeBetweenMoves);
+            BoardStateTester.instance.StartDiagonalTest((int)SelectDiag);
         }
         else
         {
@@ -288,20 +289,13 @@ public class Debugger : EditorWindow
     //Repeated bit of code that occurs before every test.
     private void InitializeTest()
     {
-        //If we have match data in the list, then end it
-        if (GameDataRecorder.instance.MatchList.Count > 0)
-        {
-            GameDataRecorder.instance.AddPlayerMove(new Vector2Int(-2, -2));
-            GameDataRecorder.instance.RecordGameFinish(0);
-        }
         //change player if necessary
         CheckPlayer((int)playerToWin);
+
         //stop any running checks
         BoardStateTester.instance.StopAllCoroutines();
-        //Hide all UI buttons so no clicks in the middle of a test
-        GameManager.instance.UIManager.HideButtons();
-        //Initial new board
-        CreateNewBoard();
+        GameManager.instance.StartNewGame();
+        GameManager.instance.DisableControls();
     }
     #endregion
 
@@ -320,31 +314,11 @@ public class Debugger : EditorWindow
         GameManager.instance.PlayerOneIcon = (int)PlayerOne;
         GameManager.instance.PlayerTwoIcon = (int)PlayerTwo;
         BoardState.BoardDimension = (int)newGridSize;
-        CreateNewBoard();
-        //Record end of current match if a match is going on
-        if (GameDataRecorder.instance.MatchList.Count > 0)
-        {
-            GameDataRecorder.instance.AddPlayerMove(new Vector2Int(-2, -2));
-            GameDataRecorder.instance.RecordGameFinish(0);
-            GameDataRecorder.instance.ReportGame(GameDataRecorder.instance.MatchList.Count - 1);
-        }
         //Switch player
         CheckPlayer((int)playerToStart);
-        GameManager.instance.UIManager.ShowGameUI();
-        //add new match to recorder
-        GameDataRecorder.instance.AddNewMatch(GameManager.instance.PlayerOneIcon, GameManager.instance.PlayerTwoIcon, BoardState.BoardDimension, (int)GameManager.CurrentPlayer);
-        //start a new game
-        GameManager.instance.EnableControls();
+        GameManager.instance.StartNewGame();
     }
 
-    //This method is called for testing board state and for the Debugger board generator. This will generate the visuals and start a new array but without the added features that BoardGenerator adds.
-    private void CreateNewBoard()
-    {
-        GameManager.instance.ClearBoard();
-        //Generate board and array
-        GameManager.instance.boardGeneration.GenerateBoard();
-        BoardState.SetBoardArray();
-    }
     #endregion
 
     //switches player if the int parameter doesn't match the int parameter of Game Manager. Keeps CurrentPlayer a read-only and also gets used in Board generation and State Testing in the debugger

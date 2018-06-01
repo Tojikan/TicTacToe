@@ -63,7 +63,6 @@ public class GameDataRecorder : MonoBehaviour
     //0: Draw          1: P1          1: P2        3: New Game Started      4: Error
     public void RecordGameFinish (int game)
     {
-        Debug.Log("Recorded a game finish of " + game);
         MatchData match = matchList[(matchList.Count - 1)];
         match.GameResult = game;
         matchList[(matchList.Count - 1)] = match;
@@ -119,7 +118,7 @@ public class GameDataRecorder : MonoBehaviour
                 if (firstPlayerMoves[i].x == -1)
                     message += "Turn " + i + ": First Player Surrenders";
                 else if (firstPlayerMoves[i].x == -2)
-                    message += "Turn " + i + ": Game was ended on Player One's turn.";
+                    message += "Turn " + i + ": Game was ended on Second Player's turn.";
                 else
                     message += ("Turn " + i + ": Player " + match.startingPlayer + " moves to " + firstPlayerMoves[i] + "\n"); 
             }
@@ -128,7 +127,7 @@ public class GameDataRecorder : MonoBehaviour
                 if (secondPlayerMoves[i].x == -1)
                     message += "Turn " + i + ": Second Player Surrenders";
                 else if (secondPlayerMoves[i].x == -2)
-                    message += "Turn " + i + ": Game was ended on Player Two's turn.";
+                    message += "Turn " + i + ": Game was ended on First Player's turn.";
                 else
                     message += ("Turn " + i + ": Second Player moves to " + secondPlayerMoves[i] + "\n");
             }

@@ -28,7 +28,11 @@ public class EmptyTile : MonoBehaviour
 
         //instantiate at this location with same rotation and set under the Board Generation Game Object
         Instantiate(tilePrefab, transform.position, Quaternion.identity, GameManager.instance.boardGeneration.gameObject.transform);
-
+        
+        //Play Audio
         AudioManager.instance.PlayTileDrop();
+
+        //Destroy After Reading
+        Destroy(gameObject);
     }
 }
