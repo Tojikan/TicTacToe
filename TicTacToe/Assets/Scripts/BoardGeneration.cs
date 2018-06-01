@@ -25,7 +25,6 @@ public class BoardGeneration : MonoBehaviour
         GetTileBounds();                            //get tile size
         GenerateTiles(dimension);                   //instantiates new tiles as child of this game object
     }
-
     #endregion 
 
     #region private functions that do all the work
@@ -56,6 +55,10 @@ public class BoardGeneration : MonoBehaviour
     //Generates the tiles 
     private void GenerateTiles(int dimension)
     {
+#if UNITY_EDITOR
+        BoardState.GenerateTileArray();
+#endif
+
         Debug.Log("Generating Tiles of Dimension: " + dimension);
         //get the position where to lay the first empty tile
         Vector3 currentPos = GetTileStartPos(dimension);
@@ -66,9 +69,14 @@ public class BoardGeneration : MonoBehaviour
            for (int j = 0; j < dimension; j++)
             {
                 //instantiate new tile as a child of this object and then reset position
-                GameObject newTile = Instantiate(emptyTile, currentPos, Quaternion.identity, gameObject.transform);
-                newTile.GetComponent<EmptyTile>().TileValue = new Vector2Int(i, j);
+                GameObject newObject = Instantiate(emptyTile, currentPos, Quaternion.identity, gameObject.transform);
+                EmptyTile newTile = newObject.GetComponent<EmptyTile>();
+                newTile.TileValue = new Vector2Int(i, j);
                 currentPos.x += tileBounds.x + tileSpacing;
+
+                #if UNITY_EDITOR
+                BoardState.AddToTileArray(newTile);
+                #endif
             }
            //set x and y for a new row
             currentPos.x = GetTileStartPos(dimension).x;
@@ -91,8 +99,8 @@ public class BoardGeneration : MonoBehaviour
         tileBounds = emptyTile.GetComponent<SpriteRenderer>().bounds.size;
     }
 
-    //clears all of the empty tiles
-    private void ClearBoard()
+    //clears all of the empty tiles. Accessed from here or from Game Manager
+    public void ClearBoard()
     {
         foreach (Transform child in transform)
         {
@@ -100,5 +108,5 @@ public class BoardGeneration : MonoBehaviour
         }
     }
 
-    #endregion
+#endregion
 }

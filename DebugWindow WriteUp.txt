@@ -1,0 +1,50 @@
+**************Tic Tac Pro Debug Window************************
+
+
+The Debug Window is a useful tool for debugging and testing the Tic Tac Pro game. It is accessible by running the game in Play Mode in the Unity Editor (It will ONLY compile in the editor and is not included in the build)
+The open the window, go to Window/Debug Window in the Unity top navigation. This will open the debug window. 
+
+The window is divided into 3 sections for the 3 main functions of the tool. I'll go through a quick writeup of each in order.
+
+
+=====Printing Match Data=====
+* This is pretty self explanatory. Enter an match number (zero-index) and the tool will log that specific data into the Unity console if the match exists. Click on the thing that shows up in the console (you'll have to expand it to see it all) and you'll see all the match data. It simply just calls GameDataRecorder and tells it to print data from a specific index on the match list using a very long and nonpretty method.
+* You can print all match history as well. It's the same as above with an extra loop.
+
+
+
+=====Board Generation=====
+*This will let you generate a new board on the fly. It works in very much the same way as the game does and calls the same methods. The added bonus is that you can set the parameters
+for a new board directly in this window. So Grid Size, Player Icons, and Starting player can be set through convenient features without having to go through the game UI. This will
+also end any game that is currently playing. 
+*Clicking on this during any Board States test will end the test.
+*You can generate a board anytime during game play, including when menus are open.
+*HOW IT WORKS - When you click on a button, it'll set the BoardState/GameManager variables to the parameters you put in the Debug Window. These variables are used for Board Generation, so then
+it's just a matter of calling the BoardGeneration function to generate a new board.
+
+
+=====Board State Testing=====
+This is probably what you're here to read.
+
+* This component lets you test the state of the board by playing through a quick simulation of the game according to parameters you set in the window. Basically, it'll replicate a full game (but without the smart decision making) to
+play through a whole game from start to the finish screen and sound effects and animations etc.
+
+* The way it tests is pretty simple. There is a separate component called the BoardStateTester which is a Monobehavior (necessary to use Coroutines). When you click on buttons to test states, it'll call this class which will then start a
+CoRoutine that places symbols down with a slight delay between each move. The Coroutine consists of a simple loop - It'll first place a piece for the player you selected to win. Then it'll place a piece for the other player right below or above it. Then it'll loop down over the rest of the row/column/diagonal until the game detects a victory/draw (it'll do this check after every move, just like the normal game, but it'll only check for the specific state you selected [row, col, diag, draw]). DebugWindow will set the player you selected to win to go first, so theoretically that player will ALWAYS win as that player goes first.
+* By using nested CoRoutines, you can also test for multiple rows/columns/diagonals at once. There are special nested coroutines in the Tester that'll call different coroutines in a loop until you iterate over each state. There is an even bigger nested CoRoutine that'll let you test ALL board states. The bottom set of buttons lets you call these nested CoRoutines.
+* The Coroutines handle all of the waiting in between steps, which is why we use them. 
+
+* You can select which dimension you want to test for Row/Columns (they both start from 0 in the top left corner) by dragging the slider to the value you want. You can then use the single state test to test that specific row/column.
+This should auto-update whenever you change the dimension of the board via the DebugWindow or a new game (might need to click on the editor window to refresh it). 
+* You can select which Diagonal you want to test: Front (/) or Back (\) from the drop down menu. 
+* You can set the time between moves in the float field. This tells the coroutine how long to wait between player steps.
+* You can set the time between tests in the  float field right above the "Test All" button section. This tells the coroutine how long to wait between nested coroutines (basically, how long you want the end game screen to last before starting a new test when clicking any of the "Test All" tests
+* You can set both of the above times in the Debug Window or you can set it directly from the BoardStateTester object's inspector. When you click the Debug Window version, it'll feed it through to the Tester upon clicking any test.
+
+* ALL coroutines are stopped if you press any UI button from the top left corner  of the screen or the buttons in the finish game screen, encounter a specific testing error, or click on a new test or Board Generator in the Debug Window.
+* These tests are logged in GameStateRecorder as well. 
+
+* Basically, the tests should simulate a game as close as possible. It calls the same methods to set down pieces, start new boards, etc. There's a few extra methods specific to testing though. 
+* Any method or feature related to this are platform dependent. They won't be compiled into the main build of the game.  
+* Speed of the tester is variable now, but will probably be set to set or capped values later once animations are in the game.
+* The tool should be usable for all grid dimensions. 

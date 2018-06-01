@@ -100,6 +100,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileValue: {x: 0, y: 0}
+  spriteRender: {fileID: 0}
 --- !u!212 &212564624234209952
 SpriteRenderer:
   m_ObjectHideFlags: 1
