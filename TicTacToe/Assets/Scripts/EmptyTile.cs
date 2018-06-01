@@ -4,6 +4,7 @@ using UnityEngine;
 
 //Class that handles empty tile functions.
 //When a tile is created in board generation, it'll get assigned a Vector2Int variable that gives the indices in the 2D array tracked in BoardState.
+//Now handles the spawning of tile prefabs when clicked on
 public class EmptyTile : MonoBehaviour
 {
     [SerializeField]
@@ -11,12 +12,6 @@ public class EmptyTile : MonoBehaviour
     public Vector2Int TileValue                      //property accessor for tileValue
     { get { return tileValue; }
       set { tileValue = value; }}
-    private SpriteRenderer spriteRender;              //The sprite render component
-
-    private void Awake()
-    {
-        spriteRender = GetComponent<SpriteRenderer>();
-    }
 
     //spawns a tile prefab at the this location when clicked depending on player turn. Note that this is separate from what the game uses to track piece positions
     public void SpawnTile()
@@ -32,7 +27,7 @@ public class EmptyTile : MonoBehaviour
             tilePrefab = GameManager.instance.iconSet.smallIcons[playerTile];
 
         //instantiate at this location with same rotation and set under the Board Generation Game Object
-        GameObject newPlayerTile = Instantiate(tilePrefab, transform.position, Quaternion.identity, GameManager.instance.boardGeneration.gameObject.transform);
+        Instantiate(tilePrefab, transform.position, Quaternion.identity, GameManager.instance.boardGeneration.gameObject.transform);
 
         AudioManager.instance.PlayTileDrop();
     }

@@ -87,6 +87,7 @@ public class GameManager : MonoBehaviour
         //Create a new match in the game data
         GameDataRecorder.instance.AddNewMatch(PlayerOneIcon, PlayerTwoIcon, BoardState.BoardDimension, (int)currentPlayer);
         FadePlayerScores();
+        UIManager.ShowGameUI();
         EnableControls();
     }
 
@@ -221,7 +222,17 @@ public class GameManager : MonoBehaviour
         UIManager.BackToSetup();
     }
 
-    #endregion
+#if UNITY_EDITOR
+    public void DebugWindow(string message)
+    {
+        DisableControls();
+        ClearBoard();
+        UIManager.DebugWindowMessage(message);
+
+    }
+#endif
+
+#endregion
 
     #region General functionalities for setting the game
     //allow mouse clicks on empty tiles to register
@@ -250,7 +261,7 @@ public class GameManager : MonoBehaviour
     {
         ClearBoard();
         //special UI method to clear all screens regardless and set up the button UI
-        UIManager.DebugBoardStateTesting();
+        UIManager.HideButtons();
         //Generate board and array
         boardGeneration.GenerateBoard();
         BoardState.SetBoardArray();

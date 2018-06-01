@@ -131,7 +131,7 @@ public static class BoardState
         //check diagonally
         if (diagonals.Contains(position))
         {
-            if (CheckRightDiagonal(player) || CheckLeftDiagonal(player))
+            if (CheckFrontDiagonal(player) || CheckBackDiagonal(player))
             {
                 Debug.Log("Player " + player + " has won!");
                 return true;
@@ -184,8 +184,8 @@ public static class BoardState
         return true;
     }
 
-    //check the diagonals, first checking like this: \ and then this /
-    public static bool CheckLeftDiagonal(int player)
+    //check the diagonals, first checking like this: \
+    public static bool CheckBackDiagonal(int player)
     {
         //top-left to bottom right, each one increments by 1,1
         for (int i = 0; i < boardDimension; i++)
@@ -199,7 +199,7 @@ public static class BoardState
     }
 
     //check on a diagonal line like this /
-    public static bool CheckRightDiagonal(int player)
+    public static bool CheckFrontDiagonal(int player)
     {
         //from bottom left to top-right, each tile increments by i, d - 1 -i
         for (int i = 0; i < boardDimension; i++)

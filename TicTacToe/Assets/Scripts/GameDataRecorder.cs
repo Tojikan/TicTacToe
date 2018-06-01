@@ -79,10 +79,10 @@ public class GameDataRecorder : MonoBehaviour
         //simply just get the data
         string message = "========\n" + "GAME" + num + "\n";
         message += "Board Dimension of " + match.boardDimension + "\n";
+        message += ("Starting player was " + (match.startingPlayer) + ". ") + "\n";
         message += ("Player 1 icon is " + match.pOneIcon) + "\n";
         message += ("Player 2 icon is " + match.pTwoIcon) + "\n";
-        message += ("Game Result was " + match.GameResult + ". 0 = no winner, 1 = p1, 2 = p2, 3 = draw, 4 = error") + "\n";
-        message += ("Starting player was " + (match.startingPlayer) + ". ") + "\n";
+        message += ("Game Result was " + match.GameResult + ".   \n 0 = No Winner, 1 = Player 1, 2 = Player 2, 3 = Draw, 4 = Error") + "\n";
 
         //figures out which is the highest count between both player arrays to determine who made the last move
         int c;
